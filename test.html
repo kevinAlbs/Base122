@@ -1,0 +1,80 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <title>Encoder</title>
+    <meta name="description" content="">
+    <meta name="author" content="Kevin Albertson">
+
+    <style type="text/css">
+    </style>
+
+    <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+    
+    <script>
+        var encodingTable = [
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '!', '#', '$',
+        '%', '&', '(', ')', '*', '+', ',', '.', '/', ':', ';', '<', '=',
+        '>', '?', '@', '[', ']', '^', '_', '`', '{', '|', '}', '~', '"'];
+
+        // Data is a string.
+        function encode(data) {
+            var index = 0;
+            var subindex = -1;
+
+            // TODO: get chunks not bits please!
+            function nextBit() {
+                // Go to next character.
+                subindex++;
+                if (subindex == 8) {
+                    index++;
+                    subindex = 0;
+                }
+                if (index == data.length) return null;
+                return (data.charCodeAt(index) & (0b10000000 >> subindex)) >= 1 ? 1 : 0;
+            }
+
+            while (true) {
+                var value = 0;
+                var n = 12;
+                // Get next 13 bits.
+                while(n >= 0) {
+                    var bit = nextBit();
+                    if (bit === null) {
+                        console.log("Done")
+                        return;
+                    }
+                    value += bit * Math.pow(2, n);
+                    n--;
+                }
+                console.log(value);
+            }
+        }
+        
+
+        var text = "1234567890123";
+        // Get 13 bits.
+        // console.log(encode(text));
+
+        // Let's test em
+        var controlCodes = "abc"
+
+
+    </script>
+
+    <script charset="utf-16">
+        var what = " is going to happen...";
+    </script>
+</body>
+</html>
