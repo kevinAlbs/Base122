@@ -20,6 +20,14 @@
     Open up the console.
     <script>
         var arr = [], curByte = 0, bitOfByte = 0;
+
+        function encodeToBase64(arr) {
+            // TODO: Once we have some binary representation of the data we wish to encode, how do we encode to base64 properly?
+            arr = [0b11111111, 0b10101010];
+            // btoa(new TextDecoder().decode(arr));
+
+        }
+
         // This function will push the last 7 bits of the given byte onto the current array,
         // which contains the numeric values of all bytes.
         function push7(byte) {
@@ -36,13 +44,41 @@
             }
         }
 
+        var unicode = "AĢ";
+
         function decode(base123String) {
-            //var unicode = "AĢ";
-            //var arr = new TextEncoder().encode(base123String);
-            var arr = new Uint8Array([0b01000001, 0b11010111, 0b10101010]);
+            // TextEncoder() is not very cross-browser.
+            var arr = new TextEncoder().encode(base123String);
+            //var arr = new Uint8Array([0b01000001, 0b11010111, 0b10101010]);
             var specials = []; // Array mapping three special bits to special characters.
             // Now arr is an array of numbers representing raw binary of characters.
             for (var i = 0; i < arr.length; i++) {
+                if (arr[i] >>> 7 == 0) {
+                    // Regular ascii.
+                    console.log('Adding', arr[i], arr[i].toString(2));
+                    // push7(byte)
+                } else {
+                    // 2 byte character.
+                    console.log('Two byte code', arr[i].toString(2));
+                    // Since we're using Uint8Arrays, left shifting should cut off.
+                    var specialIndex = (arr[i] >> 5) & 0b111;
+                    console.log('Special index', specialIndex, specialIndex.toString(2));
+                    var b1 = (arr[i] & 0b1) << 6;
+                    var b2 = arr[i+1] & 0b00111111;
+                    console.log(b1.toString(2), b2.toString(2));
+                    var remainder = ((arr[i] & 0b1) << 6) | (arr[i+1] & 0b00111111);
+                    console.log('Remainder', remainder, remainder.toString(2));
+                    i++;
+                }
+            }
+        }
+
+        function decode_(base123String) {
+            var specials = []; // Array mapping three special bits to special characters.
+            // Now arr is an array of numbers representing raw binary of characters.
+            for (var i = 0; i < base123String.length; i++) {
+                var val = base123String.codePointAt(i);
+                if (val[i] )
                 if (arr[i] >>> 7 == 0) {
                     // Regular ascii.
                     console.log('Adding', arr[i], arr[i].toString(2));
