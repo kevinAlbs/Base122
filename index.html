@@ -1,0 +1,56 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <title></title>
+    <meta name="description" content="">
+    <meta name="author" content="Kevin Albertson">
+
+    <style type="text/css">
+    </style>
+
+    <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+    Open up the console.
+    <script>
+        var arr = [], curByte = 0, bitOfByte = 0;
+        // This function will push the last 7 bits of the given byte onto the current array,
+        // which contains the numeric values of all bytes.
+        function push7(byte) {
+            byte = byte << 1;
+            console.log('Pushing ', byte, byte.toString(2));
+            // Align this byte to offset for current byte.
+            curByte = curByte | (byte >>> bitOfByte);
+            bitOfByte += 7;
+            if (bitOfByte >= 8) {
+                arr.push(curByte);
+                bitOfByte %= 8;
+                // Now, take the remainder, left shift by what has been taken.
+                curByte = (byte << (7 - bitOfByte)) & 0xFF;
+            }
+        }
+
+        function decode(base123String) {
+
+        }
+
+        function printValues(arr) {
+            var sArr = [];
+            arr.forEach((val) => {
+                var bitString = val.toString(2);
+                var s = "00000000".substring(0, 8 - bitString.length) + bitString;
+                console.log(s);
+                sArr.push(s);
+            });
+            console.log('Concatenated ', sArr.join('-'));
+        }
+
+    </script>
+</body>
+</html>

@@ -40,7 +40,7 @@ If the 7 bits are greater than or equal to 123 (123, 124, 125, 126, 127), encode
 128 - number in the first 3 bits (z) of a UTF-8 two byte character, and use the remaining bits
 for more informatin (w)
 
-2 bytes: 011zzzww 01wwwwww (15 bits of information encoded in 16)
+2 bytes: 110zzzww 01wwwwww (15 bits of information encoded in 16)
 
 Since the optimization with the 2 byte UTF-8 characters gives us a better ratio, it begs the
 question of whether a smaller base will give us better overall compression since this will
@@ -57,3 +57,17 @@ x / 128 = probability of encoding in one byte
 7 + 11 - ceil(log_2(128 - x)) / 16 = compression ratio for two bytes
 
 Briefly graphing this on my calculator gave me 122.11 as a maximum, so it seems decent.
+
+
+Implementation Notes
+--------------------
+btoa() => converts binary string to base64 (ascii). This string has UTF-16 codepoints with values between 0x00 and 0xFF to represent bytes. Groups bits in groups of 6, maps to table, produces character.
+atob() => takes base64 ascii and spits out string.
+
+I think I need to first group my data by bytes and put this into a string, then call btoa().
+
+How do I get my data into a string?
+
+
+First task:
+Converting a series of numbers into a string with raw data, taking the last 7 bits of each number.
