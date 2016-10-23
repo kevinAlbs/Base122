@@ -18,7 +18,11 @@ for i in range(128):
     file.write("\"a")
     file.write(bytearray([i]))
     file.write("\",\n")
-    #file.write(bytearray([quot, a, i, b, quot]))
+for i in range(0b11111 + 1):
+    for j in range(0b111111 + 1):
+        file.write("\"a")
+        file.write(bytearray([0b11000000 | i, 0b10000000 | j]));
+        file.write("\",\n")
 file.write("];\n</script>")
 file.close()
 print "done"
