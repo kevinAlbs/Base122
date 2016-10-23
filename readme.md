@@ -71,3 +71,17 @@ How do I get my data into a string?
 
 First task:
 Converting a series of numbers into a string with raw data, taking the last 7 bits of each number.
+
+
+Things learned
+--------------
+- % 8 chop-off is ok when variable amount is <= 7, in general for base b, adding something < b will
+not change a digit by more than one.
+
+I.e. if I'm decoding a string which is a multiple of 8 bits and has potentially 7 extra bits,
+chopping will save me.
+
+- Order of operations for bitwise operators really matters.
+data[curIndex] & curMask > 0 ? 1 : 0;
+is not the same as
+(data[curIndex] & curMask) > 0 ? 1 : 0;
