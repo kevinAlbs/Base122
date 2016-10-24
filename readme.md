@@ -68,9 +68,11 @@ I think I need to first group my data by bytes and put this into a string, then 
 
 How do I get my data into a string?
 
+Use URL.createObjectURL to avoid recreating in Base64! Now this avoids as much of a performance hit
+of rencoding/decoding!
 
-First task:
-Converting a series of numbers into a string with raw data, taking the last 7 bits of each number.
+Consider using DataView perhaps for different endianness:
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView
 
 
 Things learned

@@ -18,6 +18,7 @@
 
 <body>
     Open up the console.
+    <img />
     <script>
         var decoded = [], curByte = 0, bitOfByte = 0;
         let specials = [
@@ -239,6 +240,12 @@
             assertEqual(dataByteArray, decodedByteArray);
             var decodedByteIntArray = new Uint8Array(decodedByteArray);
             //window.decodedStringForm = btoa(new TextDecoder().decode(decodedByteIntArray));
+            var blob = new Blob([decodedByteIntArray], {type: "image/jpeg"});
+            blob.type = "image/jpeg";
+            console.log(blob);
+            window.blob = blob;
+            var url = URL.createObjectURL(blob);
+            document.querySelector('img').src = url;
 
             console.log("Base64 takes " + base64.length + " bytes");
             console.log("Base123 takes " + encodedByteArray.length + " bytes");
