@@ -1,0 +1,20 @@
+{
+  "name": "base123",
+  "version": "0.0.1",
+  "description": "Re-encodes base64 into a more compact base123 encoding",
+  "keywords": [
+    "compression",
+    "base64"
+  ],
+  "scripts": {
+    "test": "node test/testAll.js"
+  },
+  "dependencies": {
+    "base-64": "^0.1.0"
+  },
+  "devDependencies": {
+    "grunt": "^1.0.1",
+    "grunt-contrib-uglify": "^2.0.0",
+    "uglify-js-harmony": "^2.6.2"
+  }
+}
