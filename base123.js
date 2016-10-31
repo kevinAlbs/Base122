@@ -1,3 +1,6 @@
+// Read over https://github.com/mathiasbynens/base64 and maybe webkit implementation for ideas on
+// performance improvements.
+
 let base64 = require('base-64')
 , specials = [
     0 // null
@@ -6,7 +9,7 @@ let base64 = require('base-64')
     , 34 // double quote
     , 92 // backslash
 ];
-
+let assert = require('assert');
 const kDebug = false
 , kString = 0
 , kUint8Array = 1
@@ -95,11 +98,16 @@ function encodeFile(filepath) {
     // TODO.
 }
 
-function decode(rawData) {
+
+// Bitwise order of operations (according to MDN)
+// ~ << >> >>> & ^ |
+// Base for web function.
+function decodeString(strData) {
     let decoded = [];
     let curByte = 0;
     let bitOfByte = 0;
 
+    // TODO: compact this function.
     function push7(byte) {
         byte = byte << 1;
         // Align this byte to offset for current byte.
@@ -111,42 +119,55 @@ function decode(rawData) {
             // Now, take the remainder, left shift by what has been taken.
             curByte = (byte << (7 - bitOfByte)) & 0xFF;
         }
+        debugLog('Decoded[] = ', decoded);
     }
-
-    let dataType = typeof(rawData) == 'string' ? kString : kUint8Array;
     
-    // Now arr is an array of numbers representing raw binary of characters.
-    for (var i = 0; i < rawData.length; i++) {
-        if (rawData[i] & 0b10000000) {
-            // 2 byte character.
-            debugLog('Two byte code', rawData[i].toString(2), rawData[i+1].toString(2));
+    for (var i = 0; i < strData.length; i++) {
+        let c = strData.charCodeAt(i);
+        let c2 = strData.charCodeAt(i+1); // charCodeAt returns NaN if out of range, which is fine.
+
+        // Check for a leading 1 bit, indicating a two-byte character.
+        if (c >>> 7) {
+            debugLog('Two byte code', c.toString(2), c2.toString(2));
             
-            var specialIndex = (rawData[i] & 0b00011100) >>> 2;
+            var specialIndex = c >>> 2 & 7; // 7 = 0b111. Note, >>> precedes &
+            debugLog(specialIndex);
             debugLog('Special index', specialIndex, specialIndex.toString(2));
 
-            // Since we're using Uint8Arrays, left shifting should cut off. TODO: not true if str.
-            var b1 = (rawData[i] & 0b00000001) << 6;
-            var b2 = rawData[i+1] & 0b00111111;
-            debugLog('Special inflated to ', specials[specialIndex].toString(2));
+            // Get the last bit of the first character.
 
+            // Explanation
+            /*
+            var b1 = (c << 6) & 0b01000000;
+            // Get the five bits stored in the second byte.
+            var b2 = c2 & 0b00111111;
+            var remainder = b1 | b2;
+
+            // Only push if the ending flag bit is 0.
+            if (c & 2) {}
+            else push7(remainder);
+            */
+
+            debugLog('Special inflated to ', specials[specialIndex].toString(2));
             push7(specials[specialIndex]);
 
-            var remainder = b1 | b2;
-            debugLog('Remainder', remainder, remainder.toString(2));
-            // Check if ending bit is set, if so, ignore remainder.
-            if (rawData[i] & 0b00000010) {
-                debugLog('Ending bit set, not adding remainder');
-            } else {
-                push7(remainder);
-            }
+            if (~c & 2) push7(c << 6 & 64 | c2 & 63); // Note order of operations.
+            else debugLog('Ending bit set, not adding remainder');
             i++;
         } else {
             // Regular ascii.
-            debugLog('Adding', rawData[i], rawData[i].toString(2));
-            push7(rawData[i])
+            debugLog('Adding', c, c.toString(2));
+            push7(c);
         }
     }
     return decoded;
+}
+
+// TODO: DRY but inefficient. Prefer non-DRY.
+function decode(rawData) {
+    let dataType = typeof(rawData) == 'string' ? kString : kUint8Array;
+    if (dataType == kUint8Array) return decodeString(String.fromCodePoint(...rawData));
+    return decodeString(rawData);
 }
 
 module.exports = {

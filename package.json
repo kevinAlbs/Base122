@@ -7,7 +7,8 @@
     "base64"
   ],
   "scripts": {
-    "test": "node test/testAll.js"
+    "test": "node test/testAll.js",
+    "benchmark": "node test/benchmark.js"
   },
   "dependencies": {
     "base-64": "^0.1.0"
@@ -15,6 +16,7 @@
   "devDependencies": {
     "grunt": "^1.0.1",
     "grunt-contrib-uglify": "^2.0.0",
-    "uglify-js-harmony": "^2.6.2"
+    "uglify-js-harmony": "^2.6.2",
+    "benchmark": "^2.1.2"
   }
 }

@@ -87,3 +87,14 @@ chopping will save me.
 data[curIndex] & curMask > 0 ? 1 : 0;
 is not the same as
 (data[curIndex] & curMask) > 0 ? 1 : 0;
+
+
+TODO
+----
+Consider how to best support both string and numeric arrays in decode function but also allow
+easy transition to web-only version, and also get test coverage from unit tests.
+
+
+Perf test:
+JSPerf/BenchmarkJS to test:
+1. Using a plain array and casting to Uint8Array vs. using a string and concatenating
