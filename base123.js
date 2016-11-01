@@ -2,6 +2,7 @@
 // performance improvements.
 
 let base64 = require('base-64')
+, fs = require('fs')
 , specials = [
     0 // null
     , 10 // newline                
@@ -96,6 +97,11 @@ function encode(rawData) {
 
 function encodeFile(filepath) {
     // TODO.
+    // POC
+    let contents = fs.readFileSync(filepath, {encoding: 'utf-8'});
+    let encoding = encode(base64.decode(contents));
+    let encodingStr = String.fromCharCode(...encoding);
+    fs.writeFileSync(filepath + '.base123', encodingStr, {encoding: 'binary'});
 }
 
 
