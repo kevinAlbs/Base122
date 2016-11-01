@@ -101,23 +101,25 @@ function encodeFile(filepath) {
 
 // Bitwise order of operations (according to MDN)
 // ~ << >> >>> & ^ |
+// Subtraction (-) comes before all.
 // Base for web function.
 function decodeString(strData) {
     let decoded = [];
     let curByte = 0;
     let bitOfByte = 0;
 
-    // TODO: compact this function.
+    // TODO: compact and optimize this function.
     function push7(byte) {
-        byte = byte << 1;
+        byte <<= 1;
         // Align this byte to offset for current byte.
-        curByte = curByte | (byte >>> bitOfByte);
+        curByte = curByte | byte >>> bitOfByte;
+        // Explanation:
         bitOfByte += 7;
         if (bitOfByte >= 8) {
             decoded.push(curByte);
-            bitOfByte %= 8;
+            bitOfByte -= 8;
             // Now, take the remainder, left shift by what has been taken.
-            curByte = (byte << (7 - bitOfByte)) & 0xFF;
+            curByte = byte << 7 - bitOfByte & 255;
         }
         debugLog('Decoded[] = ', decoded);
     }
