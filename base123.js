@@ -104,6 +104,8 @@ function encodeFile(filepath) {
     fs.writeFileSync(filepath + '.base123', encodingStr, {encoding: 'binary'});
 }
 
+encodeFile('base64example.txt');
+
 
 // Bitwise order of operations (according to MDN)
 // ~ << >> >>> & ^ |

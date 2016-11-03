@@ -88,13 +88,19 @@ data[curIndex] & curMask > 0 ? 1 : 0;
 is not the same as
 (data[curIndex] & curMask) > 0 ? 1 : 0;
 
+- Copy paste does not always preserve UTF-8 characters in sublime!
+
+- It seems like TextEncoding than TextDecoding does not preserve the bits...
 
 TODO
 ----
 Consider how to best support both string and numeric arrays in decode function but also allow
 easy transition to web-only version, and also get test coverage from unit tests.
 
-
 Perf test:
 JSPerf/BenchmarkJS to test:
 1. Using a plain array and casting to Uint8Array vs. using a string and concatenating
+
+Currently I think we are incorrectly assuming codepoints are 1 byte each. Codepoints give two bytes
+if it is a two byte character. This may actually simplify the decode code. However, before I get
+into this, I should really confirm that I can reconstruct from base123 from a file.

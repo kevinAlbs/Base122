@@ -19,7 +19,11 @@
 <body>
     Open up the console.
     <img />
+    <div data-b123="">
+    <script src="../base123-example.js"></script>
     <script>
+    var encodedFile = str;
+
         var decoded = [], curByte = 0, bitOfByte = 0;
         let specials = [
             0 // null
@@ -231,10 +235,10 @@
             var dataStringForm = atob(base64);
             var dataByteArray = getCodePoints(dataStringForm);// new TextEncoder().encode(dataStringForm);
             //printValues(dataByteArray);
-            var encodedByteArray = encodeToBase123(dataByteArray);
+            encodedByteArray = encodeToBase123(dataByteArray);
 
             //printValues(encodedByteArray);
-            var decodedByteArray = decode(encodedByteArray);
+            decodedByteArray = decode(encodedByteArray);
             //printValues(decodedByteArray);
             //assertEqual(encodedByteArray, []);
             assertEqual(dataByteArray, decodedByteArray);
@@ -250,6 +254,46 @@
             console.log("Base64 takes " + base64.length + " bytes");
             console.log("Base123 takes " + encodedByteArray.length + " bytes");
             console.log("Raw data takes " + dataByteArray.length + " bytes");
+        }
+
+        function testFile() {
+            var dataStringForm = atob(base64);
+            var dataByteArray = getCodePoints(dataStringForm);
+            encodedByteArray = new Uint8Array(encodeToBase123(dataByteArray));
+
+            var str = (new TextDecoder()).decode(encodedByteArray);
+            var byteArrayAgain = (new TextEncoder()).encode(str);
+            assertEqual(encodedByteArray, byteArrayAgain); // HOW!
+
+            if (str != encodedFile) throw("Inequality!")
+            var encodedFileData = (new TextEncoder()).encode(fileData);
+
+            console.log("Base123 encoded string takes " + dataByteArray.length + " bytes");
+            console.log("Base123 encoded file takes " + encodedFileData.length + " bytes");
+        }
+
+        function testFromString() {
+            // Problem: we have a base123 string, and want the byte data (for now to confirm).
+            // Solution: convert str to Uint8Array using codepoints. Why TextDecoder doesn't work
+            // is beyond me, but since TextEncoder() followed by TextDecoder() doesn't give the
+            // original string back is also suspicious.
+            var dataStringForm = atob(base64);
+            var dataByteArray = getCodePoints(dataStringForm);
+            var encodedByteArray = new Uint8Array(encodeToBase123(dataByteArray));
+
+            // Now, we want to make "str" into an equal byte array.
+            var strByteArray = [];
+            for (var i = 0; i < str.length; i++) {
+                var codePoint = str.charCodeAt(i);
+                if (codePoint.toString(2).length > 7) {
+                    if (codePoint > 0xFF) {
+                        console.log("Detected two-byte codepoint", codePoint.toString(2));
+                        var corrected = codePoint - 0xFF;
+                        console.log("Corrected? ", corrected, corrected.toString(2));
+                    }
+                    //console.log(codePoint.toString(2));
+                }
+            }
         }
 
         function printValues(arr) {

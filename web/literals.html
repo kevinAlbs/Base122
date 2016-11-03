@@ -1,0 +1,42 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <title>How are UTF-8 String Literals Stored in JS</title>
+    <meta name="description" content="">
+    <meta name="author" content="Kevin Albertson">
+
+    <style type="text/css">
+    </style>
+
+    <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+    
+    <script>
+        function printValues(arr) {
+            var sArr = [];
+            arr.forEach((val) => {
+                var bitString = val.toString(2);
+                var s = "00000000".substring(0, 8 - bitString.length) + bitString;
+                sArr.push(s);
+            });
+            console.log(sArr.join('-'));
+        }
+
+        var data = new Uint8Array([0b11000000, 0b10000000]);
+        var str = (new TextDecoder()).decode(data);
+        var backToData = (new TextEncoder()).encode(str);
+        printValues(data);
+        printValues(backToData);
+
+        console.log(str, str.length);
+        console.log(str.codePointAt(0).toString(2), str.codePointAt(1).toString(2));
+    </script>
+</body>
+</html>
