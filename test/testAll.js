@@ -1,8 +1,8 @@
 // Simple correctness unit tests of encoding and decoding functions.
 
 let assert = require('assert')
-, base64 = require('base-64')
 , tester = require('./tester')
+, testData = require('./testData')
 , base123 = require('../base123')
 ;
 
@@ -56,6 +56,27 @@ tester.addTest('specialBytes', () => {
     // a second utf-8 char.
     let expectedEncoding = [kHeader | kShortened, 0b11000010, 0b10000000, 0b11000010, 0b10000000];
     testEncodeDecode(rawData, expectedEncoding);
+});
+
+
+tester.addTest('base64Img', () => {
+    // Just test that encoding and decoding gives back original.
+    let rawData = [0,0,0,102,0,0];
+    let encoded = base123.encode(rawData);
+    let decoded = base123.decode(encoded);
+    assert.deepStrictEqual(rawData, decoded);
+    // FIX
+});
+
+tester.addTest('base64Img', () => {
+    // Just test that encoding and decoding gives back original.
+    let buf = Buffer.from(testData.base64.img1, 'base64');
+    let rawData = [];
+    for (val of buf.values()) rawData.push(val);
+    let encoded = base123.encode(rawData);
+    let decoded = base123.decode(encoded);
+    assert.deepStrictEqual(rawData, decoded);
+    // FIX
 });
 
 tester.run();
