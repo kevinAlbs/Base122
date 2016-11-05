@@ -61,11 +61,11 @@ function encode(rawData) {
         // Grab 7 bits.
         var bits = get7();
         if (bits === false) break;
-
+        var header = 0b00001111; // Enforce odd and greater than 13 to avoid special chars.
         var specialIndex = specials.indexOf(bits);
         if (specialIndex != -1) {
             debugLog('Special time for bits ', bits.toString(2), bits);
-            var b1 = 0b11000000, b2 = 0b10000000;
+            var b1 = 0b11000010, b2 = 0b10000000;
             b1 |= (0b111 & specialIndex) << 2;
             // See if there are any bits after this special sequence.
             // If there are, then there can be a variable range of 7 bits in last bit of
@@ -75,7 +75,7 @@ function encode(rawData) {
             var nextBits = get7();
             if (nextBits === false) {
                 debugLog(' Special code contains the last 7ish bits.');
-                b1 |= 0b11000010; // Turn on flag.
+                header |= 0b01000000;
             } else {
                 debugLog(' There are additional bits', nextBits.toString(2))
                 // Push first bit onto first byte, remaining 6 onto second.
@@ -92,6 +92,8 @@ function encode(rawData) {
             stringData.push(bits);
         }
     }
+    // Add header byte to front.
+    stringData.unshift(header);
     return stringData;
 }
 
