@@ -14,6 +14,8 @@ let assert = require('assert');
 const kDebug = false
 , kString = 0
 , kUint8Array = 1
+, kHeader = 0b00001111 // Enforce odd and greater than 13 to avoid special chars.
+, kShortened = 0b01000000
 ;
 
 function debugLog() {
@@ -56,12 +58,11 @@ function encode(rawData) {
         }
         return b;
     }
-    
+    var header = kHeader;
     while(true) {
         // Grab 7 bits.
         var bits = get7();
         if (bits === false) break;
-        var header = 0b00001111; // Enforce odd and greater than 13 to avoid special chars.
         var specialIndex = specials.indexOf(bits);
         if (specialIndex != -1) {
             debugLog('Special time for bits ', bits.toString(2), bits);
@@ -75,7 +76,7 @@ function encode(rawData) {
             var nextBits = get7();
             if (nextBits === false) {
                 debugLog(' Special code contains the last 7ish bits.');
-                header |= 0b01000000;
+                header |= kShortened;
             } else {
                 debugLog(' There are additional bits', nextBits.toString(2))
                 // Push first bit onto first byte, remaining 6 onto second.
@@ -117,8 +118,8 @@ function decodeString(strData) {
     let decoded = [];
     let curByte = 0;
     let bitOfByte = 0;
+    let header = strData.charCodeAt(0);
 
-    // TODO: compact and optimize this function.
     function push7(byte) {
         byte <<= 1;
         // Align this byte to offset for current byte.
@@ -134,38 +135,24 @@ function decodeString(strData) {
         debugLog('Decoded[] = ', decoded);
     }
     
-    for (var i = 0; i < strData.length; i++) {
+    for (var i = 1; i < strData.length; i++) {
         let c = strData.charCodeAt(i);
-        let c2 = strData.charCodeAt(i+1); // charCodeAt returns NaN if out of range, which is fine.
 
         // Check for a leading 1 bit, indicating a two-byte character.
-        if (c >>> 7) {
-            debugLog('Two byte code', c.toString(2), c2.toString(2));
+        if (c > 127) {
+            // Note, the charCodeAt will give the codePoint, thus
+            // 0b110xxxxx 0b10yyyyyy will give => xxxxxyyyyyy
+            debugLog('Two byte code', c.toString(2));
             
-            var specialIndex = c >>> 2 & 7; // 7 = 0b111. Note, >>> precedes &
+            var specialIndex = c >>> 8 & 7; // 7 = 0b111. Note, >>> precedes &
             debugLog(specialIndex);
             debugLog('Special index', specialIndex, specialIndex.toString(2));
-
-            // Get the last bit of the first character.
-
-            // Explanation
-            /*
-            var b1 = (c << 6) & 0b01000000;
-            // Get the five bits stored in the second byte.
-            var b2 = c2 & 0b00111111;
-            var remainder = b1 | b2;
-
-            // Only push if the ending flag bit is 0.
-            if (c & 2) {}
-            else push7(remainder);
-            */
-
             debugLog('Special inflated to ', specials[specialIndex].toString(2));
             push7(specials[specialIndex]);
 
-            if (~c & 2) push7(c << 6 & 64 | c2 & 63); // Note order of operations.
-            else debugLog('Ending bit set, not adding remainder');
-            i++;
+            // Skip the remainder only if this is the last character and the header says so.
+            if (i == strData.length - 1 && (header & kShortened)) continue;
+            push7(c & 0x7F); // Note order of operations.
         } else {
             // Regular ascii.
             debugLog('Adding', c, c.toString(2));
@@ -175,10 +162,9 @@ function decodeString(strData) {
     return decoded;
 }
 
-// TODO: DRY but inefficient. Prefer non-DRY.
 function decode(rawData) {
     let dataType = typeof(rawData) == 'string' ? kString : kUint8Array;
-    if (dataType == kUint8Array) return decodeString(String.fromCodePoint(...rawData));
+    if (dataType == kUint8Array) return decodeString(Buffer.from(rawData).toString('utf-8'));
     return decodeString(rawData);
 }
 
