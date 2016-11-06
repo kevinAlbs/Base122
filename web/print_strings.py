@@ -17,6 +17,11 @@ invalidStart = 0b11000000
 invalidEnd = 0b11000010
 cap = 3000
 
+for i in range(128):
+    if (i in skipping):
+        continue
+    file.write(bytearray([i]))
+    
 for i in range(0b11111111111 + 1):
     b1 = 0b11000000 | ((i & 0b11111000000) >> 6);
     b2 = 0b10000000 | (i & 0b00000111111);
@@ -31,10 +36,7 @@ for i in range(0b11111111111 + 1):
 #     for j in range(0b111111 + 1):
 #         file.write(bytearray([0b11000010 | i, 0b10000000 | j]));
 
-# for i in range(128):
-#     if (i in skipping):
-#         continue
-#     file.write(bytearray([i]))
+
 
 file.write("\";\n</script></body></html>")
 file.close()

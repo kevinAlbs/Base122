@@ -92,6 +92,13 @@ is not the same as
 
 - It seems like TextEncoding than TextDecoding does not preserve the bits...
 
+References:
+Difference between unicode code points (just a number) and the physical encoding (utf-8, ascii, ...)
+http://www.joelonsoftware.com/articles/Unicode.html
+
+Javascript String Encoding
+https://mathiasbynens.be/notes/javascript-encoding
+
 TODO
 ----
 Consider how to best support both string and numeric arrays in decode function but also allow
@@ -104,3 +111,15 @@ JSPerf/BenchmarkJS to test:
 Currently I think we are incorrectly assuming codepoints are 1 byte each. Codepoints give two bytes
 if it is a two byte character. This may actually simplify the decode code. However, before I get
 into this, I should really confirm that I can reconstruct from base123 from a file.
+
+
+Minimal path to release
+-----------------------
+- Remove 'base64' dependency in favor of using native Buffer.from(base64string, 'base64')
+- Finish encodeFile
+- Clean up API, add comments, etc.
+- Add more base64 image test cases.
+- Do a fair perf test in a web page of base64 vs base123. (Is there an approximate function of 
+transfer rate as a function of data size.)
+- Add a case study of an image rich page before and after.
+- Finish blog post.
