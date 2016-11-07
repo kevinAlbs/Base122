@@ -38,26 +38,12 @@ encode the result.
 
 If the 7 bits are greater than or equal to 123 (123, 124, 125, 126, 127), encode the difference
 128 - number in the first 3 bits (z) of a UTF-8 two byte character, and use the remaining bits
-for more informatin (w)
+bits (w) to encode 7 additional bits.
 
-2 bytes: 110zzzww 01wwwwww (15 bits of information encoded in 16)
+2 bytes: 110zzz1w 01wwwwww (14 bits of information encoded in 16)
 
-Since the optimization with the 2 byte UTF-8 characters gives us a better ratio, it begs the
-question of whether a smaller base will give us better overall compression since this will
-only occur with small probability. A rough and likely incorrect formula for compression ratio is:
-
-(x / 128) * 7 / 8 + ((128 - x) / 128) * (7 + 11 - ceil(log_2(128 - x))) / 16
-
-Explanation:
-
-x / 128 = probability of encoding in one byte
-7 / 8 = compression ratio for one byte
-
-(128 - x)/128 = probability of encoding in two bytes
-7 + 11 - ceil(log_2(128 - x)) / 16 = compression ratio for two bytes
-
-Briefly graphing this on my calculator gave me 122.11 as a maximum, so it seems decent.
-
+Therefore, we always maintain the 7:8 ratio regardless of whether we use the UTF-8 two byte or one
+byte characters.
 
 Implementation Notes
 --------------------
@@ -90,27 +76,17 @@ is not the same as
 
 - Copy paste does not always preserve UTF-8 characters in sublime!
 
-- It seems like TextEncoding than TextDecoding does not preserve the bits...
+- TextEncoding than TextDecoding does not preserve the bits if using invalid chars (as expected)
 
-References:
+References
+----------
 Difference between unicode code points (just a number) and the physical encoding (utf-8, ascii, ...)
 http://www.joelonsoftware.com/articles/Unicode.html
 
 Javascript String Encoding
 https://mathiasbynens.be/notes/javascript-encoding
 
-TODO
-----
-Consider how to best support both string and numeric arrays in decode function but also allow
-easy transition to web-only version, and also get test coverage from unit tests.
-
-Perf test:
-JSPerf/BenchmarkJS to test:
-1. Using a plain array and casting to Uint8Array vs. using a string and concatenating
-
-Currently I think we are incorrectly assuming codepoints are 1 byte each. Codepoints give two bytes
-if it is a two byte character. This may actually simplify the decode code. However, before I get
-into this, I should really confirm that I can reconstruct from base123 from a file.
+http://davidbcalhoun.com/2011/when-to-base64-encode-images-and-when-not-to/
 
 
 Minimal path to release

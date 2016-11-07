@@ -1,8 +1,8 @@
 // Read over https://github.com/mathiasbynens/base64 and maybe webkit implementation for ideas on
 // performance improvements.
 
-let base64 = require('base-64')
-, fs = require('fs')
+let fs = require('fs')
+, readline = require('readline')
 , specials = [
     0 // null
     , 10 // newline                
@@ -10,23 +10,60 @@ let base64 = require('base-64')
     , 34 // double quote
     , 92 // backslash
 ];
-let assert = require('assert');
+
 const kDebug = false
 , kString = 0
 , kUint8Array = 1
 , kHeader = 0b00001111 // Enforce odd and greater than 13 to avoid special chars.
 , kShortened = 0b01000000
+, kDefaultMimeType = "image/png"
 ;
 
 function debugLog() {
     if (kDebug) console.log(...arguments);
 }
 
-function encodeFromBase64(base64String) {
-    return encode(base64.decode(base64String));
+function encodeFile(inpath, outpath, callback) {
+    let inStream = fs.createReadStream(inpath, {encoding: 'utf8'});
+    let outStream = fs.createWriteStream(outpath, {defaultEncoding: 'utf8'});
+
+    outStream.on('error', () => { throw "Error writing to " + outpath; });
+    inStream.on('error', () => { throw "Error reading from " + inpath; });
+
+    let rl = readline.createInterface({ input: inStream });
+    rl.on('line', (line) => {
+        let regexp = /src=[\"\']data:(.*);base64,(.*?)[\"\']/ig;
+        let results;
+        let prevIndex = 0;
+        while ((results = regexp.exec(line)) !== null) {
+            outStream.write(line.substring(prevIndex, results.index));
+            let mimetype = results[1];
+            let encoded = encodeFromBase64(results[2]);
+            let encodedStr = String.fromCharCode(...encoded);
+            outStream.write("data-b123=\"");
+            outStream.write(encodedStr, 'binary');
+            outStream.write("\"");
+            if (mimetype != kDefaultMimeType) outStream.write(" data-b123m=\"" + mimetype + "\"");
+            prevIndex = regexp.lastIndex;
+        }
+        outStream.write(line.substring(prevIndex) + "\n");
+    });
+    
+    
+    
+    //let encoding = encode(base64.decode(contents));
+    //let encodingStr = String.fromCharCode(...encoding);
+    //fs.writeFileSync(filepath + '.base123', encodingStr, {encoding: 'binary'});
 }
 
-// rawData may be a string (similar to btoa) or a Uint8Array. Returns a base123 encoded string.
+function encodeFromBase64(base64String) {
+    // "Binary" encoding encodes each byte in a separate character.
+    let strData = Buffer.from(base64String, 'base64').toString('binary');
+    return encode(strData);
+}
+
+// rawData may be a string with 1 byte per character (similar to btoa) or a Uint8Array.
+// Returns a base123 encoded string.
 function encode(rawData) {
     let dataType = typeof(rawData) == 'string' ? kString : kUint8Array;
     var curIndex = 0, curMask = 0b10000000, stringData = [];
@@ -98,18 +135,6 @@ function encode(rawData) {
     return stringData;
 }
 
-function encodeFile(filepath) {
-    // TODO.
-    // POC
-    let contents = fs.readFileSync(filepath, {encoding: 'utf-8'});
-    let encoding = encode(base64.decode(contents));
-    let encodingStr = String.fromCharCode(...encoding);
-    fs.writeFileSync(filepath + '.base123', encodingStr, {encoding: 'binary'});
-}
-
-encodeFile('base64example.txt');
-
-
 // Bitwise order of operations (according to MDN)
 // ~ << >> >>> & ^ |
 // Subtraction (-) comes before all.
@@ -171,5 +196,6 @@ function decode(rawData) {
 module.exports = {
     encode: encode,
     decode: decode,
+    encodeFromBase64: encodeFromBase64,
     encodeFile: encodeFile
 };

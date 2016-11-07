@@ -58,25 +58,20 @@ tester.addTest('specialBytes', () => {
     testEncodeDecode(rawData, expectedEncoding);
 });
 
-
-tester.addTest('base64Img', () => {
-    // Just test that encoding and decoding gives back original.
-    let rawData = [0,0,0,102,0,0];
-    let encoded = base123.encode(rawData);
-    let decoded = base123.decode(encoded);
-    assert.deepStrictEqual(rawData, decoded);
-    // FIX
-});
-
-tester.addTest('base64Img', () => {
-    // Just test that encoding and decoding gives back original.
-    let buf = Buffer.from(testData.base64.img1, 'base64');
+function testBase64EncodeDecode(base64) {
     let rawData = [];
-    for (val of buf.values()) rawData.push(val);
-    let encoded = base123.encode(rawData);
+    let base64Data = Buffer.from(base64, 'base64').toString('binary');
+    for (let i = 0; i < base64Data.length; i++) rawData.push(base64Data.codePointAt(i));
+    let encoded = base123.encodeFromBase64(base64);
     let decoded = base123.decode(encoded);
     assert.deepStrictEqual(rawData, decoded);
-    // FIX
+}
+
+tester.addTest('realBase64Data', () => {
+    // Just test that encoding and decoding gives back original.
+    testBase64EncodeDecode(testData.base64.img1);
+    testBase64EncodeDecode(testData.base64.img2);
+    testBase64EncodeDecode(testData.base64.audio1);
 });
 
 tester.run();

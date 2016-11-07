@@ -10,9 +10,7 @@
     "test": "node test/testAll.js",
     "benchmark": "node test/benchmark.js"
   },
-  "dependencies": {
-    "base-64": "^0.1.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "grunt": "^1.0.1",
     "grunt-contrib-uglify": "^2.0.0",
