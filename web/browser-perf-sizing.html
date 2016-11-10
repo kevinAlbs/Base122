@@ -1,0 +1,194 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <title>Test</title>
+    <meta name="description" content="">
+    <meta name="author" content="Kevin Albertson">
+
+    <style type="text/css">
+    </style>
+    <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+    <script>
+        // This is a copy of the NodeJS version of the decode function adorned functionality for the web.
+        // Include this function in HTML pages with base123 encoding.
+        let specials = [
+            0 // null
+            , 10 // newline
+            , 13 // carriage return
+            , 34 // double quote
+            , 92 // backslash
+        ]
+        , kHeader = 0b00001111 // Enforce odd and greater than 13 to avoid special chars.
+        , kShortened = 0b01000000
+        ;
+        // Bitwise order of operations (according to MDN)
+        // ~ << >> >>> & ^ |
+        // Subtraction (-) comes before all.
+        // Base for web function.
+        function decodeString(strData) {
+            // Performance optimization (at the cost of potentially extra space) is to allocate twice the size needed then resize later.
+            let decoded = new Uint8Array(strData.length * 2);
+            let decodedIndex = 0;
+            let curByte = 0;
+            let bitOfByte = 0;
+            let header = strData.charCodeAt(0);
+
+            function push7(byte) {
+                byte <<= 1;
+                // Align this byte to offset for current byte.
+                curByte = curByte | byte >>> bitOfByte;
+                // Explanation:
+                bitOfByte += 7;
+                if (bitOfByte >= 8) {
+                    decoded[decodedIndex++] = curByte;
+                    bitOfByte -= 8;
+                    // Now, take the remainder, left shift by what has been taken.
+                    curByte = byte << 7 - bitOfByte & 255;
+                }
+            }
+            
+            for (var i = 1; i < strData.length; i++) {
+                let c = strData.charCodeAt(i);
+
+                // Check for a leading 1 bit, indicating a two-byte character.
+                if (c > 127) {
+                    // Note, the charCodeAt will give the codePoint, thus
+                    // 0b110xxxxx 0b10yyyyyy will give => xxxxxyyyyyy
+                    
+                    var specialIndex = c >>> 8 & 7; // 7 = 0b111. Note, >>> precedes &
+                    push7(specials[specialIndex]);
+
+                    // Skip the remainder only if this is the last character and the header says so.
+                    if (i == strData.length - 1 && (header & kShortened)) continue;
+                    push7(c & 0x7F); // Note order of operations.
+                } else {
+                    // Regular ascii.
+                    push7(c);
+                }
+            }
+            return new Uint8Array(decoded, 0, decodedIndex);
+        }
+        
+        // Returns a base123 encoded string (TODO: no it doesn't).
+        function encode(rawData) {
+            let dataType = 'string';
+            var curIndex = 0, curMask = 0b10000000, stringData = [];
+            var bitsFound = 0;
+        
+            // Returns false when no more bits are left.
+            function getOne() {
+                if (curIndex >= rawData.length) return false;
+                let curByte = dataType == 'string' ? rawData.charCodeAt(curIndex) : rawData[curIndex];
+                bit = (curByte & curMask) > 0 ? 1 : 0;
+                bitsFound++;
+        
+                curMask = curMask >>> 1;
+                if (curMask == 0) {
+                    curIndex++;
+                    curMask = 0b10000000
+                }
+                return bit;
+            }
+            
+            function get7() {
+                if (curIndex >= rawData.length) return false;
+                var b = 0;
+                for (var i = 0; i < 7; i++) {
+                    b = b << 1;
+                    var bit = getOne();
+                    if (bit === false) continue; // Still want to return whatever we have, left shifted.
+                    b |= bit;
+                }
+                return b;
+            }
+            var header = kHeader;
+            while(true) {
+                // Grab 7 bits.
+                var bits = get7();
+                if (bits === false) break;
+                var specialIndex = specials.indexOf(bits);
+                if (specialIndex != -1) {
+                    
+                    var b1 = 0b11000010, b2 = 0b10000000;
+                    b1 |= (0b111 & specialIndex) << 2;
+                    // See if there are any bits after this special sequence.
+                    // If there are, then there can be a variable range of 7 bits in last bit of
+                    // special byte and remaining 6 in other.
+                    // Otherwise, there are a variable number of 7 in the special code. Either way,
+                    // % 8 should chop off the excess.
+                    var nextBits = get7();
+                    if (nextBits === false) {
+                        
+                        header |= kShortened;
+                    } else {
+                        
+                        // Push first bit onto first byte, remaining 6 onto second.
+                        var firstBit = (nextBits & 0b01000000) > 0 ? 1 : 0;
+                        
+                        b1 |= firstBit;
+                        
+                        b2 |= nextBits & 0b00111111;
+                    }
+                    stringData.push(b1);
+                    stringData.push(b2);
+                    
+                } else {
+                    stringData.push(bits);
+                }
+            }
+            // Add header byte to front.
+            stringData.unshift(header);
+            return (new TextDecoder()).decode(new Uint8Array(stringData));
+        }
+
+  
+        var testCases = [];
+        function addTestCase(size, trials) {
+            testCases.push({
+              size: size,
+              trials: trials
+            });
+        }
+        
+        // Chrome on Win10 at Alex sees 3x drop
+        // Firefox sees improvement!
+        // Prellocating and resizing improves further.
+        // I predict as the data size increases, the performance will improve. I should verify this.
+        function perfTest() {
+          testCases.forEach((testCase) => {
+            // First make a random binary string of specified size.
+            var bytes = new Uint8Array(testCase.size);
+            for (var i = 0; i < testCase.size; i++) bytes[i] = (Math.floor(Math.random() * 256));
+            var str = String.fromCharCode(...bytes);
+            
+            var b64Str = btoa(str);
+            var b123Str = encode(str);
+            
+            var start = Date.now();
+            for (var i = 0; i < testCase.trials; i++) {
+              decodeString(b123Str);
+            }
+            console.log(testCase.size + "> b123 avg", (Date.now() - start) / testCase.trials);
+            start = Date.now();
+            for (var i = 0; i < testCase.trials; i++) {
+              atob(b64Str);
+            }
+            console.log(testCase.size + "> b64 avg", (Date.now() - start) / testCase.trials);
+          });
+        }
+
+        var sizes = [10, 100, 1000, 10000, 100000, 200000];
+        sizes.forEach((size) => {
+          addTestCase(size, 100);
+        });
+    </script>
+</body>
+</html>

@@ -50,10 +50,6 @@ Implementation Notes
 btoa() => converts binary string to base64 (ascii). This string has UTF-16 codepoints with values between 0x00 and 0xFF to represent bytes. Groups bits in groups of 6, maps to table, produces character.
 atob() => takes base64 ascii and spits out string.
 
-I think I need to first group my data by bytes and put this into a string, then call btoa().
-
-How do I get my data into a string?
-
 Use URL.createObjectURL to avoid recreating in Base64! Now this avoids as much of a performance hit
 of rencoding/decoding!
 
@@ -86,16 +82,18 @@ http://www.joelonsoftware.com/articles/Unicode.html
 Javascript String Encoding
 https://mathiasbynens.be/notes/javascript-encoding
 
+Has a table comparing gzip compressed and non-gzip compressed
 http://davidbcalhoun.com/2011/when-to-base64-encode-images-and-when-not-to/
 
 
 Minimal path to release
 -----------------------
-- Remove 'base64' dependency in favor of using native Buffer.from(base64string, 'base64')
-- Finish encodeFile
+- Remove 'base64' dependency in favor of using native Buffer.from(base64string, 'base64') [done]
+- Finish encodeFile [done]
 - Clean up API, add comments, etc.
-- Add more base64 image test cases.
-- Do a fair perf test in a web page of base64 vs base123. (Is there an approximate function of 
-transfer rate as a function of data size.)
+- Add more base64 image test cases. [done]
+- Do a fair perf test in a web page of base64 vs base123. (Is there an approximate function of
+transfer rate as a function of data size.). Use JSPerf
+- Do a fair storage size test when gzip considered. original vs base64 vs base123
 - Add a case study of an image rich page before and after.
 - Finish blog post.

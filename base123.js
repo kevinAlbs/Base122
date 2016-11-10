@@ -5,7 +5,7 @@ let fs = require('fs')
 , readline = require('readline')
 , specials = [
     0 // null
-    , 10 // newline                
+    , 10 // newline
     , 13 // carriage return
     , 34 // double quote
     , 92 // backslash
@@ -14,7 +14,7 @@ let fs = require('fs')
 const kDebug = false
 , kString = 0
 , kUint8Array = 1
-, kHeader = 0b00001111 // Enforce odd and greater than 13 to avoid special chars.
+, kHeader = 0b00001111 // Enforce odd and greater than 13 to avoid special chars. TODO: improve.
 , kShortened = 0b01000000
 , kDefaultMimeType = "image/png"
 ;
@@ -49,11 +49,11 @@ function encodeFile(inpath, outpath, callback) {
         outStream.write(line.substring(prevIndex) + "\n");
     });
     
-    
-    
-    //let encoding = encode(base64.decode(contents));
-    //let encodingStr = String.fromCharCode(...encoding);
-    //fs.writeFileSync(filepath + '.base123', encodingStr, {encoding: 'binary'});
+    rl.on('close', () => {
+        inStream.close();
+        outStream.close();
+        if (callback) callback();
+    });
 }
 
 function encodeFromBase64(base64String) {
@@ -63,13 +63,13 @@ function encodeFromBase64(base64String) {
 }
 
 // rawData may be a string with 1 byte per character (similar to btoa) or a Uint8Array.
-// Returns a base123 encoded string.
+// TODO: return either Uint8Array or String, allow user to choose.
 function encode(rawData) {
     let dataType = typeof(rawData) == 'string' ? kString : kUint8Array;
     var curIndex = 0, curMask = 0b10000000, stringData = [];
     var bitsFound = 0;
 
-    // Returns false when no more bits are left.            
+    // Returns false when no more bits are left.
     function getOne() {
         if (curIndex >= rawData.length) return false;
         let curByte = dataType == kString ? rawData.codePointAt(curIndex) : rawData[curIndex];
