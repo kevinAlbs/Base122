@@ -9,7 +9,6 @@ suite.add('SmallDecode', function() {
     let encoded = [0b01010101, 0b00101010, 0b01010101, 0b00101010, 0b01010000];
     base123.decode(encoded);
 }).add('LargeDecode', () => {
-    // nop.
     base123.decode(longBase123Data);
 }).on('complete', function() {
     this.each((bench) => {
