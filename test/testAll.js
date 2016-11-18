@@ -72,6 +72,7 @@ tester.addTest('realBase64Data', () => {
     testBase64EncodeDecode(testData.base64.img1);
     testBase64EncodeDecode(testData.base64.img2);
     testBase64EncodeDecode(testData.base64.audio1);
+    testBase64EncodeDecode(testData.base64.imgBug);
 });
 
 tester.run();

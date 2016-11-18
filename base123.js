@@ -127,6 +127,7 @@ function encode(rawData) {
             stringData.push(b2);
             debugLog(' Unicode character is ', b1.toString(2), b2.toString(2));
         } else {
+            debugLog(' One byte unicode character is ', bits.toString(2));
             stringData.push(bits);
         }
     }

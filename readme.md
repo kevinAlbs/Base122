@@ -96,4 +96,8 @@ Minimal path to release
 transfer rate as a function of data size.). Use JSPerf
 - Do a fair storage size test when gzip considered. original vs base64 vs base123
 - Add a case study of an image rich page before and after.
+    - Refetch images to fix errors
+    - See what is wrong with the mis-rendered few images
+    - Test performance on firefox
+    - Test with gzip
 - Finish blog post.
