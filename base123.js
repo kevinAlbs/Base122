@@ -8,11 +8,13 @@ let fs = require('fs')
     , 10 // newline
     , 13 // carriage return
     , 34 // double quote
+    , 38 // ampersand
     , 92 // backslash
-];
+]
+, kDebug = false
+;
 
-const kDebug = false
-, kString = 0
+const kString = 0
 , kUint8Array = 1
 , kHeader = 0b00001111 // Enforce odd and greater than 13 to avoid special chars. TODO: improve.
 , kShortened = 0b01000000
@@ -62,12 +64,22 @@ function encodeFromBase64(base64String) {
     return encode(strData);
 }
 
+function print7Bits(num) {
+    return "0000000".substring(num.toString(2).length) + num.toString(2);
+}
+
+function print8Bits(num) {
+    return "00000000".substring(num.toString(2).length) + num.toString(2);
+}
+
+
 // rawData may be a string with 1 byte per character (similar to btoa) or a Uint8Array.
 // TODO: return either Uint8Array or String, allow user to choose.
 function encode(rawData) {
     let dataType = typeof(rawData) == 'string' ? kString : kUint8Array;
     var curIndex = 0, curMask = 0b10000000, stringData = [];
     var bitsFound = 0;
+    var curChar = 1; // debugging
 
     // Returns false when no more bits are left.
     function getOne() {
@@ -100,9 +112,20 @@ function encode(rawData) {
         // Grab 7 bits.
         var bits = get7();
         if (bits === false) break;
+
+        if (curIndex >= 584 && curIndex <= 595) {
+            kDebug = true;
+            let curByte = dataType == kString ? rawData.codePointAt(curIndex) : rawData[curIndex];
+            debugLog('Current Byte ', print8Bits(curByte), curByte, curIndex);
+        }
+        else {
+            kDebug = false;
+        }
+
+        debugLog('Seven input bits are ', print7Bits(bits), bits);
         var specialIndex = specials.indexOf(bits);
         if (specialIndex != -1) {
-            debugLog('Special time for bits ', bits.toString(2), bits);
+            debugLog('Special time for bits ', print7Bits(bits), bits);
             var b1 = 0b11000010, b2 = 0b10000000;
             b1 |= (0b111 & specialIndex) << 2;
             // See if there are any bits after this special sequence.
@@ -125,11 +148,14 @@ function encode(rawData) {
             }
             stringData.push(b1);
             stringData.push(b2);
-            debugLog(' Unicode character is ', b1.toString(2), b2.toString(2));
+            debugLog(' Unicode character is ', print8Bits(b1), print8Bits(b2), ' character index: ', curChar);
+            curChar++;
         } else {
-            debugLog(' One byte unicode character is ', bits.toString(2));
+            debugLog(' One byte unicode character is ', print8Bits(bits), bits, ' character index: ', curChar);
+            curChar++;
             stringData.push(bits);
         }
+        
     }
     // Add header byte to front.
     stringData.unshift(header);
