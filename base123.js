@@ -22,9 +22,9 @@ const kString = 0
 
 /**
  * Encodes raw data into base-123.
- * @param {Uint8Array|Buffer|String} rawData - The data to be encoded. This can be a Uint8Array
+ * @param {Uint8Array|Buffer|Array|String} rawData - The data to be encoded. This can be an array
  * or Buffer with raw data bytes or a string of bytes (i.e. the type of argument to btoa())
- * @returns {Uint8Array} The base-123 encoded data as a sequence of UTF-8 character bytes.
+ * @returns {Array} The base-123 encoded data as a regular array of UTF-8 character bytes.
  */
 function encode(rawData) {
     let dataType = typeof(rawData) == 'string' ? kString : kUint8Array
@@ -32,7 +32,7 @@ function encode(rawData) {
     , curBit = 0 // Points to current bit needed
     , curMask = 0b10000000
     , header = kHeader
-    , stringData = []
+    , outData = []
     , getByte = dataType == kString ? i => rawData.codePointAt(i) : i => rawData[i]
     ;
 
@@ -60,43 +60,37 @@ function encode(rawData) {
 
     while(true) {
         // Grab 7 bits.
-        var bits = get7();
+        let bits = get7();
         if (bits === false) break;
+        debugLog('Seven input bits', print7Bits(bits), bits);
 
-        debugLog('Seven input bits are ', print7Bits(bits), bits);
-        var illegalIndex = kIllegals.indexOf(bits);
+        let illegalIndex = kIllegals.indexOf(bits);
         if (illegalIndex != -1) {
-            debugLog('Special time for bits ', print7Bits(bits), bits);
-            var b1 = 0b11000010, b2 = 0b10000000;
+            debugLog('Handle illegal sequence', print7Bits(bits), bits);
+            let b1 = 0b11000010, b2 = 0b10000000;
             b1 |= (0b111 & illegalIndex) << 2;
-            // See if there are any bits after this special sequence.
-            // If there are, then there can be a variable range of 7 bits in last bit of
-            // special byte and remaining 6 in other.
-            // Otherwise, there are a variable number of 7 in the special code. Either way,
-            // % 8 should chop off the excess.
-            var nextBits = get7();
+            // See if there are any input bits after the illegal sequence.
+            let nextBits = get7();
             if (nextBits === false) {
-                debugLog(' Special code contains the last 7ish bits.');
+                debugLog('Last seven bits are an illegal sequence.');
                 header |= kShortened;
             } else {
-                debugLog(' There are additional bits', nextBits.toString(2))
+                debugLog('Additional bits to two-byte character', nextBits.toString(2))
                 // Push first bit onto first byte, remaining 6 onto second.
-                var firstBit = (nextBits & 0b01000000) > 0 ? 1 : 0;
-                debugLog(firstBit, nextBits.toString(2), nextBits & 0b01000000, b1.toString(2));
+                let firstBit = (nextBits & 0b01000000) > 0 ? 1 : 0;
                 b1 |= firstBit;
-                debugLog(b1.toString(2));
                 b2 |= nextBits & 0b00111111;
             }
-            stringData.push(b1);
-            stringData.push(b2);
+            outData.push(b1);
+            outData.push(b2);
         } else {
-            stringData.push(bits);
+            outData.push(bits);
         }
         
     }
     // Add header byte to front.
-    stringData.unshift(header);
-    return stringData;
+    outData.unshift(header);
+    return outData;
 }
 
 /**
