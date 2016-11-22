@@ -25,7 +25,7 @@ let outSrc = fs.createWriteStream(kOutDir + kNumImages + '.html')
 
 outFiles.forEach((file) => { file.write(kHeader); });
 for (let i = 0; i < kNumImages; i++) {
-    outSrc.write('<img src="' + kImgDir + i + '.png" />');
+    outSrc.write('<img src="../' + kImgDir + i + '.png" />');
     let buf = fs.readFileSync(kImgDir + i + '.png');
     let base64String = buf.toString('base64');
     outB64.write('<img src="data:image/png;base64,'+ base64String + '" />');
