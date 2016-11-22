@@ -88,18 +88,15 @@ http://davidbcalhoun.com/2011/when-to-base64-encode-images-and-when-not-to/
 
 Minimal path to release
 -----------------------
-- Remove 'base64' dependency in favor of using native Buffer.from(base64string, 'base64') [done]
-- Finish encodeFile [done]
 - Clean up API, add comments, etc.
-- Add more base64 image test cases. [done]
 - Do a fair perf test in a web page of base64 vs base123. (Is there an approximate function of
 transfer rate as a function of data size.). Use JSPerf
 - Do a fair storage size test when gzip considered. original vs base64 vs base123
 - Add a case study of an image rich page before and after.
-    - Refetch images to fix errors
-    - See what is wrong with the mis-rendered few images
     - Test performance on firefox
     - Test with gzip
 - Rename everything to base122
 - Add option to encodeFile to include decoder before </body>
-- Finish blog post.
+- Consider adding an NPM package
+- Finish blog post
+- Rewrite this readme
