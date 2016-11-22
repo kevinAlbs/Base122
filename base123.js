@@ -29,36 +29,33 @@ const kString = 0
 function encode(rawData) {
     let dataType = typeof(rawData) == 'string' ? kString : kUint8Array
     , curIndex = 0
+    , curBit = 0 // Points to current bit needed
     , curMask = 0b10000000
     , header = kHeader
     , stringData = []
+    , getByte = dataType == kString ? i => rawData.codePointAt(i) : i => rawData[i]
     ;
 
-    // Returns false when no more bits are left.
-    function getOne() {
-        if (curIndex >= rawData.length) return false;
-        let curByte = dataType == kString ? rawData.codePointAt(curIndex) : rawData[curIndex]; // TODO: Do not do this 7 times when once is necessary.
-        bit = (curByte & curMask) > 0 ? 1 : 0;
-
-        curMask = curMask >>> 1;
-        if (curMask == 0) {
-            curIndex++;
-            curMask = 0b10000000
-        }
-        return bit;
-    }
-   
-    // Get seven bits of input data. TODO: remove the use of getOne()
+    // Get seven bits of input data. Returns false if there is no input left.
     function get7() {
         if (curIndex >= rawData.length) return false;
-        var b = 0;
-        for (var i = 0; i < 7; i++) {
-            b = b << 1;
-            var bit = getOne();
-            if (bit === false) continue; // Still return whatever we have, left shifted.
-            b |= bit;
-        }
-        return b;
+        // Shift, mask, unshift to get first part.
+        let firstByte = getByte(curIndex);
+        let firstPart = ((0b11111110 >>> curBit) & firstByte) << curBit;
+        // Align it to a seven bit chunk.
+        firstPart >>= 1;
+        // Check if we need to go to the next byte for more bits.
+        curBit += 7;
+        if (curBit < 8) return firstPart; // Do not need next byte.
+        curBit -= 8;
+        curIndex++;
+        // Now we want bits [0..curBit] of the next byte if it exists.
+        if (curIndex >= rawData.length) return firstPart;
+        let secondByte = getByte(curIndex);
+        let secondPart = ((0xFF00 >>> curBit) & secondByte) & 0xFF;
+        // Align it.
+        secondPart >>= 8 - curBit;
+        return firstPart | secondPart;
     }
 
     while(true) {
