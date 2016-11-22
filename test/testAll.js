@@ -11,6 +11,7 @@ const specials = [
     , 0b0001010 // 10 = newline                
     , 0b0001101 // 13 = carriage return
     , 0b0100010 // 34 = double quote
+    , 0b0100110 // 38 = ampersand
     , 0b1011100 // 92 = backslash
 ],
 kHeader = 0b00001111,
