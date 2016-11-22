@@ -59,6 +59,13 @@ tester.addTest('specialBytes', () => {
     testEncodeDecode(rawData, expectedEncoding);
 });
 
+tester.addTest('testUTF8ToString', () => {
+    // Test helper for converting UTF-8 binary data to a string.
+    let rawData = [0b11000010, 0b10111111, 0b01010101];
+    let utf8Str = base123.utf8DataToString(rawData);
+    assert.equal(utf8Str.codePointAt(0), 0b10111111, utf8Str.codePointAt(1), 0b1010101);
+});
+
 function testBase64EncodeDecode(base64) {
     let rawData = [];
     let base64Data = Buffer.from(base64, 'base64').toString('binary');
