@@ -11,7 +11,6 @@ let fs = require('fs')
     , 38 // ampersand
     , 92 // backslash
 ]
-, kDebug = false
 ;
 
 const kString = 0
@@ -19,6 +18,7 @@ const kString = 0
 , kHeader = 0b00001111 // Enforce odd and greater than 13 to avoid special chars. TODO: improve.
 , kShortened = 0b01000000
 , kDefaultMimeType = "image/png"
+, kDebug = false
 ;
 
 function debugLog() {
@@ -112,15 +112,6 @@ function encode(rawData) {
         // Grab 7 bits.
         var bits = get7();
         if (bits === false) break;
-
-        if (curIndex >= 584 && curIndex <= 595) {
-            kDebug = true;
-            let curByte = dataType == kString ? rawData.codePointAt(curIndex) : rawData[curIndex];
-            debugLog('Current Byte ', print8Bits(curByte), curByte, curIndex);
-        }
-        else {
-            kDebug = false;
-        }
 
         debugLog('Seven input bits are ', print7Bits(bits), bits);
         var specialIndex = specials.indexOf(bits);

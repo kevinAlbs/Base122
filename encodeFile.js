@@ -1,7 +1,8 @@
 let base123 = require('./base123')
 ;
 function help() {
-    console.log("Base-123 File Encoder");
+    console.log("Base-123 Encoder");
+    console.log("Re-encodes an HTML file with base-64 encoded data into base-123");
     console.log("Usage: node encodeFile.js input-file.html output-file.html");
 }
 

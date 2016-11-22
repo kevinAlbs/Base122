@@ -100,4 +100,6 @@ transfer rate as a function of data size.). Use JSPerf
     - See what is wrong with the mis-rendered few images
     - Test performance on firefox
     - Test with gzip
+- Rename everything to base122
+- Add option to encodeFile to include decoder before </body>
 - Finish blog post.

@@ -3,16 +3,23 @@ let fs = require('fs')
 , base123 = require('../base123')
 ;
 
-const kNumImages = 1000
+if (process.argv.length != 3) {
+    console.log('Usage: node createCases.js <n>');
+    console.log('<n> is the number of images to use in the files');
+    process.exit(1);
+}
+
+const kNumImages = process.argv[2]
 , kImgDir = 'img/'
-, kHeader = "<html><head><meta charset='utf-8'></head><body>"
-, kFooter = "</body></html>"
-, kBase123Script = '<script>function b123d(a){function i(a){a<<=1,f|=a>>>g,g+=7,g>=8&&(e.push(f),g-=8,f=a<<7-g&255)}for(var b=[0,10,13,34,92],d=64,e=[],f=0,g=0,h=a.charCodeAt(0),j=1;j<a.length;j++){var k=a.charCodeAt(j);if(k>127){var l=k>>>8&7;if(i(b[l]),j==a.length-1&&h&d)continue;i(127&k)}else i(k)}return e}document.querySelectorAll("[data-b123]").forEach(a=>{var b=a.dataset.b123,c=a.dataset.b123m||"image/png";inflated=new Uint8Array(b123d(b));var d=new Blob([inflated],{type:c}),e=URL.createObjectURL(d);a.src=e});</script>'
+, kOutDir = 'out/'
+, kHeader = '<html><head><meta charset="utf-8"></head><body>'
+, kFooter = '</body></html>'
+, kBase123Script = '<script>' + fs.readFileSync('../decode.min.js') + '</script>'
 ;
 
-let outSrc = fs.createWriteStream('out.html')
-, outB64 = fs.createWriteStream('out-base64.html')
-, outB123 = fs.createWriteStream('out-base123.html')
+let outSrc = fs.createWriteStream(kOutDir + kNumImages + '.html')
+, outB64 = fs.createWriteStream(kOutDir + kNumImages + '-base64.html')
+, outB123 = fs.createWriteStream(kOutDir + kNumImages + '-base123.html')
 , outFiles = [outSrc, outB64, outB123]
 ;
 
@@ -29,3 +36,4 @@ for (let i = 0; i < kNumImages; i++) {
 }
 outB123.write(kBase123Script);
 outFiles.forEach((file) => { file.end(kFooter); });
+console.log('Files written to ' + kOutDir)

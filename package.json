@@ -8,12 +8,11 @@
   ],
   "scripts": {
     "test": "node test/testAll.js",
-    "benchmark": "node test/benchmark.js"
+    "benchmark": "node test/benchmark.js",
+    "minify": "uglifyjs decode.js -c -m --screw-ie8 --lint -o decode.min.js"
   },
   "dependencies": {},
   "devDependencies": {
-    "grunt": "^1.0.1",
-    "grunt-contrib-uglify": "^2.0.0",
     "uglify-js-harmony": "^2.6.2",
     "benchmark": "^2.1.2"
   }
