@@ -1,108 +1,0 @@
-<!--
-Bug:
-
-Here is the decoded data from Chrome and Firefox:
-584 01010001 01010001
-585 01100001 01100001
-INEQUAL 586 00000100 00010011
-INEQUAL 587 01100100 00100011
-
-
-B123 decoded: 00000100 01100100
-B64 decoded:  00010011 00100011
-Is NodeJS encoding the correct data for raw data byte 586?
--->
-<!doctype html>
-
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-
-    <title>Test</title>
-    <meta name="description" content="">
-    <meta name="author" content="Kevin Albertson">
-
-    <style type="text/css">
-    </style>
-
-    <!--[if lt IE 9]>
-    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-</head>
-
-<body>
-    <img data-b123="v~ J#(` m@0 @0ƆA``@( ƅ!PPq `0ƅBaPtJʆd1`X, 21R*F#ri@Z(	%I#[`8ƄB0P(ҨʅCρ P(ƅA P(ƅA P(ƅA P(ƅA P(ƅA P(ƅA P(ƅGBÈ@D@?| ¶à  A`o~À 4à S=UoRQʺMf+B0GJTcP>Q;Py֦MzLGN!j9TVngOCMk:=E>s(+8g| À@  	ΰ)(Ι{   Pf9MS<oj6Tofy3U%r+BeS)yg<O>dSD8-Ai9Xn5sZC6L1)kmnXU2JY!H%Җ[2x!RK0=*~hd}Jí+^7HT[)I(m*DsyB<yӵ0>s˅6 OhlmXaTK,Srӎ^e>Zu.hZ}Ӎ!^m1r U| ¨À~hÀ`	|q D ?{  À'pDÁ@@8΢	DDHң8d҃	ePl?}PÀãxpw֥cyF}kFo]4I*4]/YT<R֍Q	c{-ӥ5VA0W<DÈX%)<ӴC9sί>)S4>JM1*N6*ƂW,BUyP^=ǏBmJE`lU2Y_p(-JBx(J	U%4<_p.'GQY@cU.j`Hnc:kƱfA4:Pm@nmH*^Ɣ/o_Fs.G*y*M' y+63b_qÀÀ À	EQ0ְˇ#mH>h2n	4qJ{Q@zgf>%@<`.Ҩ7Oj/gz)yRZ+aDVZh)?ΆƂFDWB	?8(G}`9RxBm*hg8O-M?;6pB4<#j5)s0W֗*HiN2:`{lRhKiaL?lXVqv7/m!uj+h4gpML=֮g|ãEDS	NPh2^+9Bw3V(ko6p+c֥_v^(2IL^AG;K+2uǭt5)(Pt2aO0n˕Ϣlʺ`vsb!~ 0CADn;1ƍG8|E`M~bSsfU'4àPqEasK| ¨À~hÀ`	| q D ?{  À'qD΀À ҔQ8d4ΐp|?}PÀxBkY9dp>+AvΕSkP^Xa9yi+=F<viґʟ8f6@*`4?;S?N+.ևPsלu%2Mog˸mWq_prҷ:)@ FX6	]ֿEƿ+cƗ1*:SK|3R,/Mo-ҝLlm(H{pzLADfm@	PMʍa<;a-.2zoà2EI?	|3IjE!,eǥuV~geiқnaoOxN	(8_'vq8-0-#n^L'΍sDgt?`}X:pjolIc8)]o'|,P+7qM%#>P)/c9I0BO#5<_ƀX#lcJp`ΕҾGuaևH@UH9xe(vWPqliuGzN!OFπ8j}qi/$k8W9~@ECj)ntnv:c8`2$]:kt9׌ADQX?S<Rg[)^S*5gƸ95~Y[Ǟοdˡ4qq}[0}|qΥT?Rg2" />
-    <script>
-        // This is a copy of the NodeJS version of the decode function adorned functionality for the web.
-        // Include this function in HTML pages with base123 encoding.
-        let specials = [
-            0 // null
-            , 10 // newline                
-            , 13 // carriage return
-            , 34 // double quote
-            , 38 // ampersand
-            , 92 // backslash
-        ]
-        , kHeader = 0b00001111 // Enforce odd and greater than 13 to avoid special chars.
-        , kShortened = 0b01000000
-        ;
-        // Bitwise order of operations (according to MDN)
-        // ~ << >> >>> & ^ |
-        // Subtraction (-) comes before all.
-        // Base for web function.
-        function decodeString(strData) {
-            let decoded = [];
-            let curByte = 0;
-            let bitOfByte = 0;
-            let header = strData.charCodeAt(0);
-
-            function push7(byte) {
-                byte <<= 1;
-                // Align this byte to offset for current byte.
-                curByte = curByte | byte >>> bitOfByte;
-                // Explanation:
-                bitOfByte += 7;
-                if (bitOfByte >= 8) {
-                    decoded.push(curByte);
-                    bitOfByte -= 8;
-                    // Now, take the remainder, left shift by what has been taken.
-                    curByte = byte << 7 - bitOfByte & 255;
-                }
-            }
-            
-            for (var i = 1; i < strData.length; i++) {
-                let c = strData.charCodeAt(i);
-
-                // Check for a leading 1 bit, indicating a two-byte character.
-                if (c > 127) {
-                    // Note, the charCodeAt will give the codePoint, thus
-                    // 0b110xxxxx 0b10yyyyyy will give => xxxxxyyyyyy
-                    
-                    var specialIndex = c >>> 8 & 7; // 7 = 0b111. Note, >>> precedes &
-                    push7(specials[specialIndex]);
-
-                    // Skip the remainder only if this is the last character and the header says so.
-                    if (i == strData.length - 1 && (header & kShortened)) continue;
-                    push7(c & 0x7F); // Note order of operations.
-                } else {
-                    // Regular ascii.
-                    push7(c);
-                }
-            }
-            return decoded;
-        }
-
-
-        function decode(el) {
-            var str = el.dataset.b123;
-            var mime = el.dataset.b123m || 'image/png';
-            inflated = new Uint8Array(decodeString(str));
-            var blob = new Blob([inflated], {type: mime});
-            console.log(blob);
-            var url = URL.createObjectURL(blob);
-            el.src = url;
-        }
-
-        document.querySelectorAll('[data-b123]').forEach(el => decode(el));
-    </script>
-</body>
