@@ -1,7 +1,17 @@
-Compact Data URI
-================
+# Base-122 Encoding #
+An efficient alternative to base-64 encoding for embedding binary data in UTF-8. Base-122 is
+further described in [this article](#TODO).
 
-The goal is to improve the base64 data URI by using the ASCII characters that base64 neglects.
+## Usage ##
+Base-122 can be used in HTML pages as an alternative to base-64 encoding.
+
+## Space and Performance ##
+Although base-122 is more space-efficient...
+<b>DISCLAIMER</b> [Tests](#TODO) show that using Gzip will encode base-122 pages compress worse than base-64 encoding
+with Gzip. Additionally, the inline base-122 decoder often performs worse than the native base-64
+atob function. Therefore, base-122 is not worth using for web pages (especialy if served with GZip).
+But it can be used as a general binary-to-text encoding.
+
 
 Existing Work
 -------------
@@ -124,15 +134,7 @@ UTF-8 to JS string. Mathias' comment only applies to three byte UTF-8 strings.
 
 Minimal path to release
 -----------------------
-- Clean up API, add comments, etc.
-- Do a fair perf test in a web page of base64 vs base123. (Is there an approximate function of
-transfer rate as a function of data size.). Use JSPerf
-- Do a fair storage size test when gzip considered. original vs base64 vs base123
-- Add a case study of an image rich page before and after.
-    - Test performance on firefox
-    - Test with gzip
-- Rename everything to base122
-- Add option to encodeFile to include decoder before </body>
+- Add option to encodeFile to encode binary files
 - Consider adding an NPM package
 - Finish blog post
 - Rewrite this readme

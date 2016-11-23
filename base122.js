@@ -94,21 +94,39 @@ function encode(rawData) {
 }
 
 /**
- * Re-encodes an HTML file with base-64 strings to one with base-122 strings.
+ * Re-encodes an HTML or text file with base-64 data to one with base-122 data.
  * @param {String} inpath - The filepath of the input file.
  * @param {String} outpath - The filepath of the output file.
+ * @param {Object} options
+ * @param {Boolean} options.html - Parse the input file as HTML and re-encode base64 data URIs.
+ * @param {Boolean} options.addDecoder - If HTML, insert the minified decoder before </body>.
  * @param {Function} callback - Called upon completion.
  */
-function encodeFile(inpath, outpath, callback) {
+function encodeFile(inpath, outpath, options, callback) {
     let inStream = fs.createReadStream(inpath, {encoding: 'utf8'});
     let outStream = fs.createWriteStream(outpath, {defaultEncoding: 'utf8'});
+    let decoderScript = options.addDecoder ? fs.readFileSync('decode.min.js') : '';
 
     outStream.on('error', () => { throw 'Error writing to ' + outpath; });
     inStream.on('error', () => { throw 'Error reading from ' + inpath; });
 
+    if (!options.html) {
+        // This is a plain base-64 encoded file.
+        let fileContents = "";
+        inStream.on('data', (chunk) => { fileContents += chunk; });
+        inStream.on('end', () => {
+            let encoded = encodeFromBase64(fileContents);
+            let encodedStr = String.fromCharCode(...encoded);
+            outStream.end(encodedStr, 'binary', callback);
+        });
+        return;
+    }
+
     let rl = readline.createInterface({ input: inStream });
     rl.on('line', (line) => {
+        console.log(line);
         let regexp = /src=[\"\']data:(.*);base64,(.*?)[\"\']/ig;
+        let bodyRegExp = /<\/body>/i;
         let results;
         let prevIndex = 0;
         while ((results = regexp.exec(line)) !== null) {
@@ -122,20 +140,29 @@ function encodeFile(inpath, outpath, callback) {
             if (mimetype != kDefaultMimeType) outStream.write(' data-b122m="' + mimetype + '"');
             prevIndex = regexp.lastIndex;
         }
+        if (options.addDecoder) {
+            // Check for </body> to insert decoder.
+            if ((results = bodyRegExp.exec(line)) != null) {
+                // </body> cannot be valid if it's before any data URI.
+                if (results.index >= prevIndex) {
+                    outStream.write(line.substring(0, results.index) + '<script>' + decoderScript
+                        + '</script>');
+                    prevIndex = results.index;
+                }
+            }
+        }
         outStream.write(line.substring(prevIndex) + "\n");
     });
     
     rl.on('close', () => {
-        inStream.close();
-        outStream.close();
-        if (callback) callback();
+        outStream.end('', callback);
     });
 }
 
 /**
  * Re-encodes a base-64 encoded string into base-122.
  * @param {String} base64String - A base-64 encoded string.
- * @returns {Uint8Array} - The base-122 encoded data.
+ * @returns {Array} - The base-122 encoded data.
  */
 function encodeFromBase64(base64String) {
     // "binary" encoding encodes each byte in a separate character.
