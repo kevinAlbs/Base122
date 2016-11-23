@@ -24,7 +24,7 @@ const kString = 0
  * Encodes raw data into base-123.
  * @param {Uint8Array|Buffer|Array|String} rawData - The data to be encoded. This can be an array
  * or Buffer with raw data bytes or a string of bytes (i.e. the type of argument to btoa())
- * @returns {Array} The base-123 encoded data as a regular array of UTF-8 character bytes.
+ * @returns {Array} The base-123 encoded data as a regular array of UTF-8 character byte values.
  */
 function encode(rawData) {
     let dataType = typeof(rawData) == 'string' ? kString : kUint8Array
@@ -147,62 +147,48 @@ function encodeFromBase64(base64String) {
  * Decodes base-123 encoded data back to the original data.
  * @param {Uint8Array|Buffer|String} rawData - The data to be decoded. This can be a Uint8Array
  * or Buffer with raw data bytes or a string of bytes (i.e. the type of argument to btoa())
- * @returns {Uint8Array} The base-123 encoded data as a sequence of UTF-8 character bytes.
+ * @returns {Array} The data in a regular array representing byte values.
  */
 function decode(base123Data) {
-    // TODO: make sure this matches web version as closely as possible
-    let strData = base123Data;
-    if (typeof(rawData) != 'string') strData = utf8DataToString(base123Data);
-    // Bitwise order of operations (according to MDN)
-    // ~ << >> >>> & ^ |
-    // Subtraction (-) comes before all.
-    // Base for web function.
-    let decoded = [];
-    let curByte = 0;
-    let bitOfByte = 0;
-    let header = strData.charCodeAt(0);
+    let strData = typeof(base123Data) == 'string' ? base123Data : utf8DataToString(base123Data)
+    , decoded = []
+    , decodedIndex = 0
+    , curByte = 0
+    , bitOfByte = 0
+    , header = strData.charCodeAt(0)
+    ;
 
     function push7(byte) {
         byte <<= 1;
         // Align this byte to offset for current byte.
-        curByte = curByte | byte >>> bitOfByte;
-        // Explanation:
+        curByte |= (byte >>> bitOfByte);
         bitOfByte += 7;
         if (bitOfByte >= 8) {
             decoded.push(curByte);
             bitOfByte -= 8;
             // Now, take the remainder, left shift by what has been taken.
-            curByte = byte << 7 - bitOfByte & 255;
+            curByte = (byte << (7 - bitOfByte)) & 255;
         }
-        debugLog('Decoded[] = ', decoded);
     }
     
-    for (var i = 1; i < strData.length; i++) {
+    for (let i = 1; i < strData.length; i++) {
         let c = strData.charCodeAt(i);
-
-        // Check for a leading 1 bit, indicating a two-byte character.
+        // Check if this is a two-byte character.
         if (c > 127) {
             // Note, the charCodeAt will give the codePoint, thus
             // 0b110xxxxx 0b10yyyyyy will give => xxxxxyyyyyy
-            debugLog('Two byte code', c.toString(2));
-            
-            var illegalIndex = c >>> 8 & 7; // 7 = 0b111. Note, >>> precedes &
-            debugLog(illegalIndex);
-            debugLog('Special index', illegalIndex, illegalIndex.toString(2));
-            debugLog('Special inflated to ', kIllegals[illegalIndex].toString(2));
-            push7(kIllegals[illegalIndex]);
-
-            // Skip the remainder only if this is the last character and the header says so.
-            if (i == strData.length - 1 && (header & kShortened)) continue;
-            push7(c & 0x7F); // Note order of operations.
+            push7(kIllegals[(c >>> 8) & 7]); // 7 = 0b111.
+            // Push the remainder if this is not the last character or if the header says to.
+            // 64 = 0b01000000, is the flag of the header bit.
+            if (i != strData.length - 1 || !(header & 64)) push7(c & 127);
         } else {
-            // Regular ascii.
-            debugLog('Adding', c, c.toString(2));
+            // One byte characters can be pushed directly.
             push7(c);
         }
     }
     return decoded;
 }
+
 
 /**
  * Converts a sequence of UTF-8 bytes to a string.

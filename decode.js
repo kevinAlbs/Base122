@@ -10,7 +10,7 @@
     function decode(el) {
         var strData = el.dataset.b123
         , mime = el.dataset.b123m || 'image/png'
-        , specials = [
+        , kIllegals = [
             0 // null
             , 10 // newline                
             , 13 // carriage return
@@ -45,7 +45,7 @@
             if (c > 127) {
                 // Note, the charCodeAt will give the codePoint, thus
                 // 0b110xxxxx 0b10yyyyyy will give => xxxxxyyyyyy
-                push7(specials[(c >>> 8) & 7]); // 7 = 0b111.
+                push7(kIllegals[(c >>> 8) & 7]); // 7 = 0b111.
                 // Push the remainder if this is not the last character or if the header says to.
                 // 64 = 0b01000000, is the flag of the header bit.
                 if (i != strData.length - 1 || !(header & 64)) push7(c & 127);

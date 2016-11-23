@@ -6,7 +6,7 @@ let assert = require('assert')
 , base123 = require('../base123')
 ;
 
-const specials = [
+const kIllegals = [
       0b0000000 // 0 = null
     , 0b0001010 // 10 = newline                
     , 0b0001101 // 13 = carriage return
@@ -40,16 +40,16 @@ tester.addTest('severalBytes', () => {
     testEncodeDecode(rawData, expectedEncoding);
 });
 
-tester.addTest('specialBytes', () => {
-    // Test one single byte of each special with an extra 1.
-    specials.forEach((special, index) => {
-        let rawData = [(special << 1) | 1];
+tester.addTest('illegalBytes', () => {
+    // Test one single byte of each illegal with an extra 1.
+    kIllegals.forEach((illegal, index) => {
+        let rawData = [(illegal << 1) | 1];
         // Expect 0b110 <3 bit index> <0 flag> <1 bit> and zeros for rest.
         let expectedEncoding = [kHeader, 0b11000011 | (index << 2), 0b10000000];
         testEncodeDecode(rawData, expectedEncoding);
     });
 
-    // Test two consecutive special bytes.
+    // Test two consecutive illegal sequences.
     let rawData = [0, 0];
     let strData = String.fromCodePoint(...rawData);
 

@@ -1,6 +1,5 @@
 // Tests how base-123 compresses with gzip compression.
 // Initial results show that base64 compresses better than base123.
-// TODO: test in the context of an html page.
 
 let testData = require('./testData')
 , base123 = require('../base123.js')
