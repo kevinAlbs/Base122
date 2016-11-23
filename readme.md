@@ -85,6 +85,42 @@ https://mathiasbynens.be/notes/javascript-encoding
 Has a table comparing gzip compressed and non-gzip compressed
 http://davidbcalhoun.com/2011/when-to-base64-encode-images-and-when-not-to/
 
+Bug
+---
+Oh boy.
+
+Problem #1: Why does TextDecoder(bytes) followed by TextEncoder(string) sometimes not return the original bytes?
+Problem #2: Why does getCodePoint() in JS not give back the raw UTF-8 bytes?
+
+After hasty research [1], [3], problem #1 seemed to be caused by invalid two-byte UTF-8 byte sequences, which I did not know existed. 
+This file confirms that as long as the first byte is 0b110xxx1x and above, these are all valid. One bit lost is actually not bad,
+as I can compensate by changing my somewhat arbitary ending flag for a single header byte at the front of the string.
+
+Problem #2 is really two issues. The first, naively, was assuming that getCodePoint() returned the full UTF-8
+encoding string, i.e. 0b110xxxxx 0b10xxxxxx with the 0b110 and 0b10 included. However, since the codepoint is just
+the bits that are really encoded (the x's) getCodePoint will return those bits concatenated. However, this may make
+decoding easier!
+
+The second issue to this is that some bytes were invalid bytes caused by problem #1, giving incorrect results on top of my
+incorrect assumptions.
+
+Before scrapping encode and decode, modify the python script to write a string of sequential valid UTF-8 characters. Then, simply
+reread the string in the browser to ensure the codepoints are what we expect. My remaining concern, from [2].
+
+I may also want to read [4,5] to ensure I'm not misunderstanding anything.
+
+[1] https://en.wikipedia.org/wiki/UTF-8 See the section on the codepage layout. Notice how some sections of two-byte sequences
+are invalid.
+
+[2] http://ecmanaut.blogspot.com/2006/07/encoding-decoding-utf8-in-javascript.html Using decodeURIComponent to convert from
+UTF-8 to JS string. Mathias' comment only applies to three byte UTF-8 strings.
+
+[3] https://tools.ietf.org/html/rfc3629#page-5 Gives a layout of valid UTF-8 strings.
+
+[4] https://mathiasbynens.be/notes/javascript-escapes Mathias' post.
+
+[5] https://en.wikipedia.org/wiki/Byte_order_mark BOM
+
 
 Minimal path to release
 -----------------------

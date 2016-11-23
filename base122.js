@@ -1,4 +1,4 @@
-// Provides functions for encoding/decoding data to and from base-123.
+// Provides functions for encoding/decoding data to and from base-122.
 
 let fs = require('fs')
 , readline = require('readline')
@@ -21,10 +21,10 @@ const kString = 0
 ;
 
 /**
- * Encodes raw data into base-123.
+ * Encodes raw data into base-122.
  * @param {Uint8Array|Buffer|Array|String} rawData - The data to be encoded. This can be an array
  * or Buffer with raw data bytes or a string of bytes (i.e. the type of argument to btoa())
- * @returns {Array} The base-123 encoded data as a regular array of UTF-8 character byte values.
+ * @returns {Array} The base-122 encoded data as a regular array of UTF-8 character byte values.
  */
 function encode(rawData) {
     let dataType = typeof(rawData) == 'string' ? kString : kUint8Array
@@ -94,7 +94,7 @@ function encode(rawData) {
 }
 
 /**
- * Re-encodes an HTML file with base-64 strings to one with base-123 strings.
+ * Re-encodes an HTML file with base-64 strings to one with base-122 strings.
  * @param {String} inpath - The filepath of the input file.
  * @param {String} outpath - The filepath of the output file.
  * @param {Function} callback - Called upon completion.
@@ -116,10 +116,10 @@ function encodeFile(inpath, outpath, callback) {
             let mimetype = results[1];
             let encoded = encodeFromBase64(results[2]);
             let encodedStr = String.fromCharCode(...encoded);
-            outStream.write('data-b123="');
+            outStream.write('data-b122="');
             outStream.write(encodedStr, 'binary');
             outStream.write('"');
-            if (mimetype != kDefaultMimeType) outStream.write(' data-b123m="' + mimetype + '"');
+            if (mimetype != kDefaultMimeType) outStream.write(' data-b122m="' + mimetype + '"');
             prevIndex = regexp.lastIndex;
         }
         outStream.write(line.substring(prevIndex) + "\n");
@@ -133,9 +133,9 @@ function encodeFile(inpath, outpath, callback) {
 }
 
 /**
- * Re-encodes a base-64 encoded string into base-123.
+ * Re-encodes a base-64 encoded string into base-122.
  * @param {String} base64String - A base-64 encoded string.
- * @returns {Uint8Array} - The base-123 encoded data.
+ * @returns {Uint8Array} - The base-122 encoded data.
  */
 function encodeFromBase64(base64String) {
     // "binary" encoding encodes each byte in a separate character.
@@ -144,13 +144,13 @@ function encodeFromBase64(base64String) {
 }
 
 /**
- * Decodes base-123 encoded data back to the original data.
+ * Decodes base-122 encoded data back to the original data.
  * @param {Uint8Array|Buffer|String} rawData - The data to be decoded. This can be a Uint8Array
  * or Buffer with raw data bytes or a string of bytes (i.e. the type of argument to btoa())
  * @returns {Array} The data in a regular array representing byte values.
  */
-function decode(base123Data) {
-    let strData = typeof(base123Data) == 'string' ? base123Data : utf8DataToString(base123Data)
+function decode(base122Data) {
+    let strData = typeof(base122Data) == 'string' ? base122Data : utf8DataToString(base122Data)
     , decoded = []
     , decodedIndex = 0
     , curByte = 0

@@ -1,15 +1,15 @@
-// A base-123 decoder meant to run inside an HTML page on page load.
+// A base-122 decoder meant to run inside an HTML page on page load.
 //
 // To use, copy the decode.min.js file in a <script> tag inside the encoded HTML page. To minify the
 // decoder again (if changes are made), use uglifyjs, or use the command provided in this package:
 // npm run-script minify
 
 (function() {
-    // Given an HTML element with a data-b123 (and optional data-b123m) attribute, sets the src
+    // Given an HTML element with a data-b122 (and optional data-b122m) attribute, sets the src
     // to a blob URL of the represented data.
     function decode(el) {
-        var strData = el.dataset.b123
-        , mime = el.dataset.b123m || 'image/png'
+        var strData = el.dataset.b122
+        , mime = el.dataset.b122m || 'image/png'
         , kIllegals = [
             0 // null
             , 10 // newline                
@@ -58,6 +58,6 @@
             new Blob([new Uint8Array(decoded, 0, decodedIndex)], {type: mime}));
     }
 
-    var list = document.querySelectorAll('[data-b123]');
+    var list = document.querySelectorAll('[data-b122]');
     for (var i = 0; i < list.length; i++) decode(list[i]);
 }());

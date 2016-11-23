@@ -3,7 +3,7 @@
 let assert = require('assert')
 , tester = require('./tester')
 , testData = require('./testData')
-, base123 = require('../base123')
+, base122 = require('../base122')
 ;
 
 const kIllegals = [
@@ -20,14 +20,14 @@ kShortened = 0b01000000
 
 function testEncodeDecode(rawData, expectedEncoding) {
     let strData = String.fromCodePoint(...rawData);
-    assert.deepStrictEqual(expectedEncoding, base123.encode(rawData));
-    assert.deepStrictEqual(expectedEncoding, base123.encode(strData));
+    assert.deepStrictEqual(expectedEncoding, base122.encode(rawData));
+    assert.deepStrictEqual(expectedEncoding, base122.encode(strData));
     // Decode the encoding.
-    assert.deepStrictEqual(rawData, base123.decode(expectedEncoding));
+    assert.deepStrictEqual(rawData, base122.decode(expectedEncoding));
 }
 
 tester.addTest('oneByte', () => {
-    // Encode in base123, then decode, check that equal to the original.
+    // Encode in base-122, then decode, check that equal to the original.
     // Let's first encode one byte of just ones.
     let rawData = [0b11111111], expectedEncoding = [kHeader, 0b01111111, 0b01000000];
     testEncodeDecode(rawData, expectedEncoding);
@@ -62,7 +62,7 @@ tester.addTest('illegalBytes', () => {
 tester.addTest('testUTF8ToString', () => {
     // Test helper for converting UTF-8 binary data to a string.
     let rawData = [0b11000010, 0b10111111, 0b01010101];
-    let utf8Str = base123.utf8DataToString(rawData);
+    let utf8Str = base122.utf8DataToString(rawData);
     assert.equal(utf8Str.codePointAt(0), 0b10111111, utf8Str.codePointAt(1), 0b1010101);
 });
 
@@ -70,8 +70,8 @@ function testBase64EncodeDecode(base64) {
     let rawData = [];
     let base64Data = Buffer.from(base64, 'base64').toString('binary');
     for (let i = 0; i < base64Data.length; i++) rawData.push(base64Data.codePointAt(i));
-    let encoded = base123.encodeFromBase64(base64);
-    let decoded = base123.decode(encoded);
+    let encoded = base122.encodeFromBase64(base64);
+    let decoded = base122.decode(encoded);
     assert.deepStrictEqual(rawData, decoded);
 }
 

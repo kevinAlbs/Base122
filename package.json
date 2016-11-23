@@ -1,7 +1,7 @@
 {
-  "name": "base123",
+  "name": "base122",
   "version": "0.0.1",
-  "description": "Re-encodes base64 into a more compact base123 encoding",
+  "description": "Re-encodes base-64 into a more compact base-122 encoding",
   "keywords": [
     "compression",
     "base64"
