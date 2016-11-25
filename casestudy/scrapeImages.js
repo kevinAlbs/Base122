@@ -23,7 +23,7 @@ function fetchImage() {
         res.on('end', () => {
             if (numImagesLeft <= 0) return;
             numImagesLeft--;
-            fs.writeFile('img/' + numImagesLeft + '.png', imageData);
+            fs.writeFile('img/' + numImagesLeft + '.jpg', imageData);
             fetchImage();
         });
     });

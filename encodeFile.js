@@ -37,8 +37,6 @@ if (process.argv.length > 4) {
     }
 }
 
-console.log("HTML? ", html, addDecoder);
-
 base122.encodeFile(inFile, outFile, { html: html, addDecoder: addDecoder }, () => {
     console.log('Base-122 encoded file written to ' + outFile);
     process.exit(0);
