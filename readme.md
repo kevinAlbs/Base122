@@ -1,5 +1,5 @@
 # Base-122 Encoding #
-A space efficient UTF-8 binary-to-text encoding created as an alternative to base-64 in data URIs. Base-122 is ~14% smaller than equivalent base-64 encoded data. Details of motivation and implementation can be found on [this article](http://blog.kevinalbs.com/base-122).
+A space efficient UTF-8 binary-to-text encoding created as an alternative to base-64 in data URIs. Base-122 is ~14% smaller than equivalent base-64 encoded data. Details of motivation and implementation can be found on [this article](http://blog.kevinalbs.com/base122).
 
 ## Basic Usage ##
 Base-122 encoding produces UTF-8 characters, but encodes more bits per byte than base-64.
@@ -29,7 +29,7 @@ let decodedData = base122.decode(fileData);
 ```
 
 ## Using in Web Pages ##
-Base-122 was created with the web in mind as an alternative to base-64 in data URIs. However, as explained in [this article](http://blog.kevinalbs.com/base-122), base-122 is <i>not recommended</i> to be used in web pages. Base-64 compresses better than base-122 with gzip, and there is a performance penalty of decoding. However, the web decoder is still included in this repository for experimentation.
+Base-122 was created with the web in mind as an alternative to base-64 in data URIs. However, as explained in [this article](http://blog.kevinalbs.com/base122), base-122 is <i>not recommended</i> to be used in web pages. Base-64 compresses better than base-122 with gzip, and there is a performance penalty of decoding. However, the web decoder is still included in this repository for experimentation.
 </blockquote>
 
 The script encodeFile.js is used as a convenience to re-encode base-64 data URIs from an HTML file into base-122.
@@ -61,7 +61,7 @@ This produces the file `example-base122.html`
 
 The file [decode.min.js](decode.min.js) is a 486 byte decoder that can be included in web pages with base-122 encoded data. This can be copied into a base-122 encoded file, which will query the DOM for elements with the "data-b122" attribute. Passing the "--addDecoder" flag will automatically include it:
 ```shell
-node encodeFile.js --html --addDecoder example.html example-base122.html
+node encodeFile.js --html --add-decoder example.html example-base122.html
 ```
 Will now produce the file with the decoder:
 ```html
