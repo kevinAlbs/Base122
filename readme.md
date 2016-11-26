@@ -1,140 +1,75 @@
 # Base-122 Encoding #
-An efficient alternative to base-64 encoding for embedding binary data in UTF-8. Base-122 is
-further described in [this article](#TODO).
+A space efficient UTF-8 binary-to-text encoding created as an alternative to base-64 in data URIs. Base-122 is ~14% smaller than equivalent base-64 encoded data. Details of motivation and implementation can be found on [this article](http://blog.kevinalbs.com/base-122).
 
-## Usage ##
-Base-122 can be used in HTML pages as an alternative to base-64 encoding.
+## Basic Usage ##
+Base-122 encoding produces UTF-8 characters, but encodes more bits per byte than base-64.
+```javascript
+let base122 = require('../base122');
+let inputData = require('fs').readFileSync('example.jpg')
+let base64Encoded = inputData.toString('base64');
+let base122Encoded = Buffer.from(base122.encode(inputData), 'utf8');
 
-## Space and Performance ##
-Although base-122 is more space-efficient...
-<b>DISCLAIMER</b> [Tests](#TODO) show that using Gzip will encode base-122 pages compress worse than base-64 encoding
-with Gzip. Additionally, the inline base-122 decoder often performs worse than the native base-64
-atob function. Therefore, base-122 is not worth using for web pages (especialy if served with GZip).
-But it can be used as a general binary-to-text encoding.
+console.log("Original size = " + inputData.length); // Original size = 1429
+console.log("Base-64 size = " + base64Encoded.length); // Base-64 size = 1908
+console.log("Base-122 size = " + base122Encoded.length); // Base-122 size = 1635
+console.log("Saved " + (base64Encoded.length - base122Encoded.length) + " bytes") // Saved 273 bytes
+```
 
+Note, even though base-122 produces valid UTF-8 characters, control characters aren't always preserved when copy pasting. Therefore, encodings should be saved to files through scripts, not copy-pasting. Here is an example of saving base-122 to a file:
+```javascript
+let base122 = require('./base122'), fs = require('fs');
+let encodedData = base122.encode([0b01101100, 0b11110000]);
+fs.writeFileSync('encoded.txt', Buffer.from(encodedData), {encoding: 'utf-8'});
+```
+And to decode a base-122 encoded file:
+```javascript
+let base122 = require('./base122'), fs = require('fs');
+let fileData = fs.readFileSync('encoded.txt', {encoding: 'utf-8'});
+let decodedData = base122.decode(fileData);
+```
 
-Existing Work
--------------
-[Base91](http://base91.sourceforge.net/) implementation encodes 13-14 bit sequences in two 91 bit
-characters. 91^2 = 8281 and 2^13 = 8192, so there is some room 8281-8192=89. The algorithm is:
-Take 13 bits, if the value is < 88, than it is safe to consume an additional bit, since 2^13 + 88 <
-8281. The final encoding uses ASCII characters
-0xxxxxxx 0xxxxxxx with final values mapped from original data to a character table.
+## Using in Web Pages ##
+Base-122 was created with the web in mind as an alternative to base-64 in data URIs. However, as explained in [this article](http://blog.kevinalbs.com/base-122), base-122 is <i>not recommended</i> to be used in web pages. Base-64 compresses better than base-122 with gzip, and there is a performance penalty of decoding. However, the web decoder is still included in this repository for experimentation.
+</blockquote>
 
-Two 91 bit characters can encode 13 bits, saving 1 bit for every 16 bits of input as opposed to
-base64. The decoder is also probably a bit simpler.
+The script encodeFile.js is used as a convenience to re-encode base-64 data URIs from an HTML file into base-122.
+Suppose you have a base-64 encoded image in the file `example.html` as follows:
+```html
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"></head>
+<body>
+    <img src="data:image/jpg;base64,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" />
+</body>
+</html>
+```
 
-Approach
---------
+This can be re-encoded to base-122 using the following:
+```shell
+node encodeFile.js --html example.html example-base122.html
+```
+This produces the file `example-base122.html`
+```html
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"></head>
+<body>
+    <img data-b122="v~ J#(` m@0 @0ƆA``@( ƅ!PPq `0ƅBaPtJʆd1`X, 21R*F#ri@Z( %I#[`8ƄB0P(ҨʅCρ P(ƅA P(ƅA P(ƅA P(ƅA P(ƅA P(ƅA P(ƅGBÈ@D@?| ¶à  A`o~À 4à S=UoRQʺMf+B0GJTcP>Q;Py֦MzLGN!j9TVngOCMk:=E>s(+8g| À@    ΰ)(Ι{   Pf9MS<oj6Tofy3U%r+BeS)yg<O>dSD8-Ai9Xn5sZC6L1)kmnXU2JY!H%Җ[2x!RK0=*~hd}Jí+^7HT[)I(m*DsyB<yӵ0>s˅6 OhlmXaTK,Srӎ^e>Zu.hZ}Ӎ!^m1r U| ¨À~hÀ`   |q D ?{  À'pDÁ@@8΢   DDHң8d҃  ePl?}PÀãxpw֥cyF}kFo]4I*4]/YT<R֍Q c{-ӥ5VA0W<DÈX%)<ӴC9sί>)S4>JM1*N6*ƂW,BUyP^=ǏBmJE`lU2Y_p(-JBx(J U%4<_p.'GQY@cU.j`Hnc:kƱfA4:Pm@nmH*^Ɣ/o_Fs.G*y*M' y+63b_qÀÀ À EQ0ְˇ#mH>h2n    4qJ{Q@zgf>%@<`.Ҩ7Oj/gz)yRZ+aDVZh)?ΆƂFDWB    ?8(G}`9RxBm*hg8O-M?;6pB4<#j5)s0W֗*HiN2:`{lRhKiaL?lXVqv7/m!uj+h4gpML=֮g|ãEDS    NPh2^+9Bw3V(ko6p+c֥_v^(2IL^AG;K+2uǭt5)(Pt2aO0n˕Ϣlʺ`vsb!~ 0CADn;1ƍG8|E`M~bSsfU'4àPqEasK| ¨À~hÀ` | q D ?{  À'qD΀À ҔQ8d4ΐp|?}PÀxBkY9dp>+AvΕSkP^Xa9yi+=F<viґʟ8f6@*`4?;S?N+.ևPsלu%2Mog˸mWq_prҷ:)@ FX6    ]ֿEƿ+cƗ1*:SK|3R,/Mo-ҝLlm(H{pzLADfm@ PMʍa<;a-.2zoà2EI?   |3IjE!,eǥuV~geiқnaoOxN    (8_'vq8-0-#n^L'΍sDgt?`}X:pjolIc8)]o'|,P+7qM%#>P)/c9I0BO#5<_ƀX#lcJp`ΕҾGuaևH@UH9xe(vWPqliuGzN!OFπ8j}qi/$k8W9~@ECj)ntnv:c8`2$]:kt9׌ADQX?S<Rg[)^S*5gƸ95~Y[Ǟοdˡ4qq}[0}|qΥT?Rg2" />
+</body>
+</html>
+```
 
-Based on quick testing (modern Edge, Chrome, Firefox, and IE) it seems like it is safe to pass
-123 of the ASCII characters, excluding newline, double quote, carriage return, backslash, and null
-character. However, null character seems fine to pass, but sublime text renders the HTML file as
-a binary file.
-
-This proposes to encode at least 7 bits per byte, improving base64 by 1 bit per byte and improving
-base91 by about .5 bits per byte.
-
-To handle values that appear outside of the base, i.e. numbers 124-127, I'm proposing to use two
-byte UTF-8 characters to encode the 7 bits and consume additional information.
-
-UTF-8 Encoding scheme
----------------------
-
-If the 7 bits (x) are less than 123, map to our character table (y), and
-encode the result.
-
-1 byte: 0yyyyyyy (7 bits of information encoded in 8)
-
-If the 7 bits are greater than or equal to 123 (123, 124, 125, 126, 127), encode the difference
-128 - number in the first 3 bits (z) of a UTF-8 two byte character, and use the remaining bits
-bits (w) to encode 7 additional bits.
-
-2 bytes: 110zzz1w 01wwwwww (14 bits of information encoded in 16)
-
-Therefore, we always maintain the 7:8 ratio regardless of whether we use the UTF-8 two byte or one
-byte characters.
-
-Implementation Notes
---------------------
-btoa() => converts binary string to base64 (ascii). This string has UTF-16 codepoints with values between 0x00 and 0xFF to represent bytes. Groups bits in groups of 6, maps to table, produces character.
-atob() => takes base64 ascii and spits out string.
-
-Use URL.createObjectURL to avoid recreating in Base64! Now this avoids as much of a performance hit
-of rencoding/decoding!
-
-Consider using DataView perhaps for different endianness:
-https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView
-
-
-Things learned
---------------
-- % 8 chop-off is ok when variable amount is <= 7, in general for base b, adding something < b will
-not change a digit by more than one.
-
-I.e. if I'm decoding a string which is a multiple of 8 bits and has potentially 7 extra bits,
-chopping will save me.
-
-- Order of operations for bitwise operators really matters.
-data[curIndex] & curMask > 0 ? 1 : 0;
-is not the same as
-(data[curIndex] & curMask) > 0 ? 1 : 0;
-
-- Copy paste does not always preserve UTF-8 characters in sublime!
-
-- TextEncoding than TextDecoding does not preserve the bits if using invalid chars (as expected)
-
-References
-----------
-Difference between unicode code points (just a number) and the physical encoding (utf-8, ascii, ...)
-http://www.joelonsoftware.com/articles/Unicode.html
-
-Javascript String Encoding
-https://mathiasbynens.be/notes/javascript-encoding
-
-Has a table comparing gzip compressed and non-gzip compressed
-http://davidbcalhoun.com/2011/when-to-base64-encode-images-and-when-not-to/
-
-Bug
----
-Oh boy.
-
-Problem #1: Why does TextDecoder(bytes) followed by TextEncoder(string) sometimes not return the original bytes?
-Problem #2: Why does getCodePoint() in JS not give back the raw UTF-8 bytes?
-
-After hasty research [1], [3], problem #1 seemed to be caused by invalid two-byte UTF-8 byte sequences, which I did not know existed. 
-This file confirms that as long as the first byte is 0b110xxx1x and above, these are all valid. One bit lost is actually not bad,
-as I can compensate by changing my somewhat arbitary ending flag for a single header byte at the front of the string.
-
-Problem #2 is really two issues. The first, naively, was assuming that getCodePoint() returned the full UTF-8
-encoding string, i.e. 0b110xxxxx 0b10xxxxxx with the 0b110 and 0b10 included. However, since the codepoint is just
-the bits that are really encoded (the x's) getCodePoint will return those bits concatenated. However, this may make
-decoding easier!
-
-The second issue to this is that some bytes were invalid bytes caused by problem #1, giving incorrect results on top of my
-incorrect assumptions.
-
-Before scrapping encode and decode, modify the python script to write a string of sequential valid UTF-8 characters. Then, simply
-reread the string in the browser to ensure the codepoints are what we expect. My remaining concern, from [2].
-
-I may also want to read [4,5] to ensure I'm not misunderstanding anything.
-
-[1] https://en.wikipedia.org/wiki/UTF-8 See the section on the codepage layout. Notice how some sections of two-byte sequences
-are invalid.
-
-[2] http://ecmanaut.blogspot.com/2006/07/encoding-decoding-utf8-in-javascript.html Using decodeURIComponent to convert from
-UTF-8 to JS string. Mathias' comment only applies to three byte UTF-8 strings.
-
-[3] https://tools.ietf.org/html/rfc3629#page-5 Gives a layout of valid UTF-8 strings.
-
-[4] https://mathiasbynens.be/notes/javascript-escapes Mathias' post.
-
-[5] https://en.wikipedia.org/wiki/Byte_order_mark BOM
-
-
-Minimal path to release
------------------------
-- Add option to encodeFile to encode binary files
-- Consider adding an NPM package
-- Finish blog post
-- Rewrite this readme
+The file [decode.min.js](decode.min.js) is a 486 byte decoder that can be included in web pages with base-122 encoded data. This can be copied into a base-122 encoded file, which will query the DOM for elements with the "data-b122" attribute. Passing the "--addDecoder" flag will automatically include it:
+```shell
+node encodeFile.js --html --addDecoder example.html example-base122.html
+```
+Will now produce the file with the decoder:
+```html
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"></head>
+<body>
+    <img data-b122="v~ J#(` m@0 @0ƆA``@( ƅ!PPq `0ƅBaPtJʆd1`X, 21R*F#ri@Z( %I#[`8ƄB0P(ҨʅCρ P(ƅA P(ƅA P(ƅA P(ƅA P(ƅA P(ƅA P(ƅGBÈ@D@?| ¶à  A`o~À 4à S=UoRQʺMf+B0GJTcP>Q;Py֦MzLGN!j9TVngOCMk:=E>s(+8g| À@    ΰ)(Ι{   Pf9MS<oj6Tofy3U%r+BeS)yg<O>dSD8-Ai9Xn5sZC6L1)kmnXU2JY!H%Җ[2x!RK0=*~hd}Jí+^7HT[)I(m*DsyB<yӵ0>s˅6 OhlmXaTK,Srӎ^e>Zu.hZ}Ӎ!^m1r U| ¨À~hÀ`   |q D ?{  À'pDÁ@@8΢   DDHң8d҃  ePl?}PÀãxpw֥cyF}kFo]4I*4]/YT<R֍Q c{-ӥ5VA0W<DÈX%)<ӴC9sί>)S4>JM1*N6*ƂW,BUyP^=ǏBmJE`lU2Y_p(-JBx(J U%4<_p.'GQY@cU.j`Hnc:kƱfA4:Pm@nmH*^Ɣ/o_Fs.G*y*M' y+63b_qÀÀ À EQ0ְˇ#mH>h2n    4qJ{Q@zgf>%@<`.Ҩ7Oj/gz)yRZ+aDVZh)?ΆƂFDWB    ?8(G}`9RxBm*hg8O-M?;6pB4<#j5)s0W֗*HiN2:`{lRhKiaL?lXVqv7/m!uj+h4gpML=֮g|ãEDS    NPh2^+9Bw3V(ko6p+c֥_v^(2IL^AG;K+2uǭt5)(Pt2aO0n˕Ϣlʺ`vsb!~ 0CADn;1ƍG8|E`M~bSsfU'4àPqEasK| ¨À~hÀ` | q D ?{  À'qD΀À ҔQ8d4ΐp|?}PÀxBkY9dp>+AvΕSkP^Xa9yi+=F<viґʟ8f6@*`4?;S?N+.ևPsלu%2Mog˸mWq_prҷ:)@ FX6    ]ֿEƿ+cƗ1*:SK|3R,/Mo-ҝLlm(H{pzLADfm@ PMʍa<;a-.2zoà2EI?   |3IjE!,eǥuV~geiқnaoOxN    (8_'vq8-0-#n^L'΍sDgt?`}X:pjolIc8)]o'|,P+7qM%#>P)/c9I0BO#5<_ƀX#lcJp`ΕҾGuaևH@UH9xe(vWPqliuGzN!OFπ8j}qi/$k8W9~@ECj)ntnv:c8`2$]:kt9׌ADQX?S<Rg[)^S*5gƸ95~Y[Ǟοdˡ4qq}[0}|qΥT?Rg2" />
+<script>!function(){function t(t){function e(t){t<<=1,l|=t>>>d,d+=7,d>=8&&(c[o++]=l,d-=8,l=t<<7-d&255)}for(var n=t.dataset.b122,a=t.dataset.b122m||"image/jpg",r=[0,10,13,34,38,92],c=new Uint8Array(1.75*n.length|0),o=0,l=0,d=0,g=n.charCodeAt(0),h=1;h<n.length;h++){var i=n.charCodeAt(h);i>127?(e(r[i>>>8&7]),h==n.length-1&&64&g||e(127&i)):e(i)}t.src=URL.createObjectURL(new Blob([new Uint8Array(c,0,o)],{type:a}))}for(var e=document.querySelectorAll("[data-b122]"),n=0;n<e.length;n++)t(e[n])}();</script></body>
+</html>
+```

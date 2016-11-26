@@ -8,7 +8,7 @@ const kString = 0
 , kUint8Array = 1
 , kHeader = 0b00001111 // To avoid illegal characters, enforce odd and >13. TODO: improve.
 , kShortened = 0b01000000
-, kDefaultMimeType = "image/png"
+, kDefaultMimeType = "image/jpg"
 , kDebug = false
 , kIllegals = [
     0 // null
@@ -124,7 +124,6 @@ function encodeFile(inpath, outpath, options, callback) {
 
     let rl = readline.createInterface({ input: inStream });
     rl.on('line', (line) => {
-        console.log(line);
         let regexp = /src=[\"\']data:(.*);base64,(.*?)[\"\']/ig;
         let bodyRegExp = /<\/body>/i;
         let results;
