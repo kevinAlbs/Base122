@@ -28,7 +28,7 @@ for (let i = 0; i < kNumImages; i++) {
     outSrc.write('<img src="../' + kImgDir + i + '.jpg" />');
     let buf = fs.readFileSync(kImgDir + i + '.jpg');
     let base64String = buf.toString('base64');
-    outB64.write('<img src="data:image/jpg;base64,'+ base64String + '" />');
+    outB64.write('<img src="data:image/jpeg;base64,'+ base64String + '" />');
     let base122Data = base122.encodeFromBase64(base64String); // TODO: bad, encode from buffer.
     outB122.write('<img data-b122="');
     outB122.write(new Buffer(new Uint8Array(base122Data)));
