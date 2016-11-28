@@ -8,7 +8,7 @@ const kString = 0
 , kUint8Array = 1
 , kHeader = 0b00001111 // To avoid illegal characters, enforce odd and >13. TODO: improve.
 , kShortened = 0b01000000
-, kDefaultMimeType = "image/jpg"
+, kDefaultMimeType = "image/jpeg"
 , kDebug = false
 , kIllegals = [
     0 // null
@@ -86,7 +86,7 @@ function encode(rawData) {
         } else {
             outData.push(bits);
         }
-        
+
     }
     // Add header byte to front.
     outData.unshift(header);
@@ -152,7 +152,7 @@ function encodeFile(inpath, outpath, options, callback) {
         }
         outStream.write(line.substring(prevIndex) + "\n");
     });
-    
+
     rl.on('close', () => {
         outStream.end('', callback);
     });
@@ -196,7 +196,7 @@ function decode(base122Data) {
             curByte = (byte << (7 - bitOfByte)) & 255;
         }
     }
-    
+
     for (let i = 1; i < strData.length; i++) {
         let c = strData.charCodeAt(i);
         // Check if this is a two-byte character.

@@ -9,7 +9,7 @@
     // to a blob URL of the represented data.
     function decode(el) {
         var strData = el.dataset.b122
-        , mime = el.dataset.b122m || 'image/jpg'
+        , mime = el.dataset.b122m || 'image/jpeg'
         , kIllegals = [
             0 // null
             , 10 // newline                
