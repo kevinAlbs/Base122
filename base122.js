@@ -6,8 +6,6 @@ let fs = require('fs')
 
 const kString = 0
 , kUint8Array = 1
-, kHeader = 0b00001111 // To avoid illegal characters, enforce odd and >13. TODO: improve.
-, kShortened = 0b01000000
 , kDefaultMimeType = "image/jpeg"
 , kDebug = false
 , kIllegals = [
@@ -18,6 +16,7 @@ const kString = 0
     , 38 // ampersand
     , 92 // backslash
 ]
+, kShortened = 0b111 // Uses the illegal index to signify the last two-byte char encodes <= 7 bits.
 ;
 
 /**
@@ -31,7 +30,6 @@ function encode(rawData) {
     , curIndex = 0
     , curBit = 0 // Points to current bit needed
     , curMask = 0b10000000
-    , header = kHeader
     , outData = []
     , getByte = dataType == kString ? i => rawData.codePointAt(i) : i => rawData[i]
     ;
@@ -66,30 +64,29 @@ function encode(rawData) {
 
         let illegalIndex = kIllegals.indexOf(bits);
         if (illegalIndex != -1) {
-            debugLog('Handle illegal sequence', print7Bits(bits), bits);
-            let b1 = 0b11000010, b2 = 0b10000000;
-            b1 |= (0b111 & illegalIndex) << 2;
-            // See if there are any input bits after the illegal sequence.
+            // Since this will be a two-byte character, get the next chunk of seven bits.
             let nextBits = get7();
+            debugLog('Handle illegal sequence', print7Bits(bits), print7Bits(nextBits));
+
+            let b1 = 0b11000010, b2 = 0b10000000;
             if (nextBits === false) {
                 debugLog('Last seven bits are an illegal sequence.');
-                header |= kShortened;
+                b1 |= (0b111 & kShortened) << 2
+                nextBits = bits; // Encode these bits after the shortened signifier.
             } else {
-                debugLog('Additional bits to two-byte character', nextBits.toString(2))
-                // Push first bit onto first byte, remaining 6 onto second.
-                let firstBit = (nextBits & 0b01000000) > 0 ? 1 : 0;
-                b1 |= firstBit;
-                b2 |= nextBits & 0b00111111;
+                b1 |= (0b111 & illegalIndex) << 2;
             }
+
+            // Push first bit onto first byte, remaining 6 onto second.
+            let firstBit = (nextBits & 0b01000000) > 0 ? 1 : 0;
+            b1 |= firstBit;
+            b2 |= nextBits & 0b00111111;
             outData.push(b1);
             outData.push(b2);
         } else {
             outData.push(bits);
         }
-
     }
-    // Add header byte to front.
-    outData.unshift(header);
     return outData;
 }
 
@@ -181,7 +178,6 @@ function decode(base122Data) {
     , decodedIndex = 0
     , curByte = 0
     , bitOfByte = 0
-    , header = strData.charCodeAt(0)
     ;
 
     function push7(byte) {
@@ -197,16 +193,18 @@ function decode(base122Data) {
         }
     }
 
-    for (let i = 1; i < strData.length; i++) {
+    for (let i = 0; i < strData.length; i++) {
         let c = strData.charCodeAt(i);
         // Check if this is a two-byte character.
         if (c > 127) {
             // Note, the charCodeAt will give the codePoint, thus
             // 0b110xxxxx 0b10yyyyyy will give => xxxxxyyyyyy
-            push7(kIllegals[(c >>> 8) & 7]); // 7 = 0b111.
-            // Push the remainder if this is not the last character or if the header says to.
-            // 64 = 0b01000000, is the flag of the header bit.
-            if (i != strData.length - 1 || !(header & 64)) push7(c & 127);
+            let illegalIndex = (c >>> 8) & 7; // 7 = 0b111.
+            // We have to first check if this is a shortened two-byte character, i.e. if it only
+            // encodes <= 7 bits.
+            if (illegalIndex != kShortened) push7(kIllegals[illegalIndex]);
+            // Always push the rest.
+            push7(c & 127);
         } else {
             // One byte characters can be pushed directly.
             push7(c);

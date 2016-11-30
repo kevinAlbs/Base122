@@ -18,12 +18,11 @@
             , 38 // ampersand
             , 92 // backslash
         ]
-        // 1.75 = 14 / 8, which is the worse case data per char, even excluding the header.
+        // 1.75 = 14 / 8, which is the worse case amount of encoded data per char.
         , decoded = new Uint8Array(1.75 * strData.length | 0) // | 0 is a terse way to round down
         , decodedIndex = 0
         , curByte = 0
         , bitOfByte = 0
-        , header = strData.charCodeAt(0)
         ;
 
         function push7(byte) {
@@ -38,17 +37,18 @@
                 curByte = (byte << (7 - bitOfByte)) & 255;
             }
         }
-        
-        for (var i = 1; i < strData.length; i++) {
+        for (var i = 0; i < strData.length; i++) {
             var c = strData.charCodeAt(i);
             // Check if this is a two-byte character.
             if (c > 127) {
                 // Note, the charCodeAt will give the codePoint, thus
                 // 0b110xxxxx 0b10yyyyyy will give => xxxxxyyyyyy
-                push7(kIllegals[(c >>> 8) & 7]); // 7 = 0b111.
-                // Push the remainder if this is not the last character or if the header says to.
-                // 64 = 0b01000000, is the flag of the header bit.
-                if (i != strData.length - 1 || !(header & 64)) push7(c & 127);
+                var illegalIndex = (c >>> 8) & 7; // 7 = 0b111.
+                // We have to first check if this is a shortened two-byte character, i.e. if it only
+                // encodes <= 7 bits.
+                if (illegalIndex != 7) push7(kIllegals[illegalIndex]);
+                // Always push the rest.
+                push7(c & 127);
             } else {
                 // One byte characters can be pushed directly.
                 push7(c);
