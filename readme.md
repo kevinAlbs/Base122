@@ -1,4 +1,4 @@
-# Base-122 Encoding #
+# Base-122 Encoding (UTF-8 Base-1658 with space efficiency 8/7 as Base-128) #
 A space efficient UTF-8 binary-to-text encoding created as an alternative to base-64 in data URIs. Base-122 is ~14% smaller than equivalent base-64 encoded data. Details of motivation and implementation can be found on [this article](http://blog.kevinalbs.com/base122).
 
 Base-122 is currently an experimental encoding, and may undergo changes.
