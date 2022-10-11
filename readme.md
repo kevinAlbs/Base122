@@ -78,3 +78,6 @@ Will now produce the file with the decoder:
 
 ## Development ##
 If contributing changes to encoder/decoder functions, first run the tests with `npm test`. Note that there are two slightly different forms of the decoder function. [base122.js](base122.js) contains a decoder function for the NodeJS implementation, while [decode.js](decode.js) contains the decoder function with slight changes to run in the browser. Run `npm run-script minify` to minify [decode.js](decode.js) into [decode.min.js](decode.min.js).
+
+## Other Implementations ##
+- C: https://github.com/kevinAlbs/libbase122
