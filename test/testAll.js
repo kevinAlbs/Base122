@@ -82,4 +82,10 @@ tester.addTest('realBase64Data', () => {
     testBase64EncodeDecode(testData.base64.imgBug);
 });
 
+tester.addTest('throws error encoding strings with code points > 255', () => {
+    assert.throws(() => {
+        base122.encode("美");
+    })
+});
+
 tester.run();
