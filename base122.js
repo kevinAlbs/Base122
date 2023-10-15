@@ -31,8 +31,18 @@ function encode(rawData) {
     , curBit = 0 // Points to current bit needed
     , curMask = 0b10000000
     , outData = []
-    , getByte = dataType == kString ? i => rawData.codePointAt(i) : i => rawData[i]
+    , getByte = i => rawData[i]
     ;
+
+    if (dataType == kString) {
+        getByte = (i) => {
+            let val = rawData.codePointAt(i);
+            if (val > 255) {
+                throw "Unexpected code point at position: " + i + ". Expected value [0,255]. Got: " + val;
+            }
+            return val;
+        }
+    }
 
     // Get seven bits of input data. Returns false if there is no input left.
     function get7() {
