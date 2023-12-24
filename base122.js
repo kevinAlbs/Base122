@@ -131,7 +131,7 @@ function encodeFile(inpath, outpath, options, callback) {
 
     let rl = readline.createInterface({ input: inStream });
     rl.on('line', (line) => {
-        let regexp = /src=[\"\']data:(.*);base64,(.*?)[\"\']/ig;
+        let regexp = /src=[\"\']data:(.*?);base64,(.*?)[\"\']/ig;
         let bodyRegExp = /<\/body>/i;
         let results;
         let prevIndex = 0;
