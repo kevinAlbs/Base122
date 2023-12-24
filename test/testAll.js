@@ -88,4 +88,33 @@ tester.addTest('throws error encoding strings with code points > 255', () => {
     })
 });
 
+tester.addTest('can encode HTML with two <img> on same line', (end_callback) => {
+    const input = "<img src='data:image/jpeg;base64,Qw==' /><img src='data:image/jpeg;base64,Qw==' />";
+
+    const fs = require('fs');
+    fs.writeFileSync("test.html", input);
+
+    // Wrap test in promise to always delete temporary files in `finally`.
+    new Promise((resolve) => {
+        base122.encodeFile ("test.html", "test.html.out", {
+            html: true,
+            addDecoder: true
+        }, resolve);
+    }).then(() => {
+        const got = fs.readFileSync("test.html.out", { encoding: "utf8"});
+        const expect = '<img data-b122="!@" /><img data-b122="!@" />' + "\n"; // quirk: a newline is always added
+        assert.equal(got, expect);
+    }).finally(() => {
+        if (fs.existsSync("test.html")) {
+            fs.unlinkSync ("test.html");
+        }
+        if (fs.existsSync("test.html.out")) {
+            fs.unlinkSync ("test.html.out");
+        }
+        end_callback();
+    });
+}, true /* async */);
+
+
+
 tester.run();
