@@ -151,7 +151,7 @@ function encodeFile(inpath, outpath, options, callback) {
             if ((results = bodyRegExp.exec(line)) != null) {
                 // </body> cannot be valid if it's before any data URI.
                 if (results.index >= prevIndex) {
-                    outStream.write(line.substring(0, results.index) + '<script>' + decoderScript
+                    outStream.write(line.substring(prevIndex, results.index) + '<script>' + decoderScript
                         + '</script>');
                     prevIndex = results.index;
                 }
